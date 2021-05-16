@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/JackKCWong/go-runner/internal/rest"
-	"github.com/labstack/echo/v4"
+	"github.com/JackKCWong/go-runner/internal/app"
 	"io/ioutil"
 	"os"
 )
@@ -13,8 +12,16 @@ func main() {
 		return
 	}
 
-	ioutil.TempFile(wd, "go-runner")
-	e := echo.New()
+	tmp, err := ioutil.TempFile(wd, "go-runner")
+	if err != nil {
+		return
+	}
 
-	e.POST("/deploy", rest.DeployApp)
+	runner := app.NewGoRunner(tmp.Name(), ":8080")
+
+	err = runner.Start()
+	if err != nil {
+		panic(err)
+		return
+	}
 }

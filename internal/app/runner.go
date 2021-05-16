@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-func NewRunner(cwd, address string) *GoRunner {
+func NewGoRunner(cwd, address string) *GoRunner {
 	return &GoRunner{
 		cwd:     cwd,
 		address: address,
@@ -51,7 +51,6 @@ func (r *GoRunner) startApp(appName string) error {
 	return app.Start()
 }
 
-
 func (r *GoRunner) getApp(appName string) (*GoApp, error) {
 	app, ok := r.apps.Load(appName)
 	if !ok {
@@ -60,5 +59,3 @@ func (r *GoRunner) getApp(appName string) (*GoApp, error) {
 
 	return app.(*GoApp), nil
 }
-
-
