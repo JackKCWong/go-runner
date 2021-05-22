@@ -2,48 +2,43 @@ package app
 
 import (
 	"errors"
-	"fmt"
-	"github.com/labstack/echo/v4"
+	"path"
 	"sync"
 )
 
-func NewGoRunner(cwd, address string) *GoRunner {
+func NewGoRunner(cwd string) *GoRunner {
 	return &GoRunner{
-		cwd:     cwd,
-		address: address,
-		server:  echo.New(),
+		cwd: cwd,
 	}
 }
 
 type GoRunner struct {
-	apps    sync.Map
-	cwd     string
-	server  *echo.Echo
-	address string
+	apps sync.Map
+	cwd  string
 }
 
-func (r *GoRunner) registerApp(name, gitUrl string) (*GoApp, error) {
+func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 
-	appDir := fmt.Sprintf("%s/apps/%s", r.cwd, name)
+	appDir := path.Join(r.cwd, "apps", appName)
 
 	app := &GoApp{
-		Name:   name,
+		Name:   appName,
 		GitURL: gitUrl,
-		dir:    appDir,
+		AppDir: appDir,
 	}
 
-	if err := app.Clone(); err != nil {
+	if err := app.Clone(gitUrl); err != nil {
 		return nil, err
 	}
 
-	r.apps.Store(name, app)
+	r.apps.Store(appName, app)
 
 	return app, nil
 }
 
-func (r *GoRunner) startApp(appName string) error {
+func (r *GoRunner) StartApp(appName string) error {
 
-	app, err := r.getApp(appName)
+	app, err := r.GetApp(appName)
 	if err != nil {
 		return err
 	}
@@ -51,7 +46,7 @@ func (r *GoRunner) startApp(appName string) error {
 	return app.Start()
 }
 
-func (r *GoRunner) getApp(appName string) (*GoApp, error) {
+func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
 	app, ok := r.apps.Load(appName)
 	if !ok {
 		return nil, errors.New("app not found")

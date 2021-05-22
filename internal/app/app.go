@@ -1,29 +1,37 @@
 package app
 
 import (
-	"fmt"
+	"context"
 	"github.com/go-git/go-git/v5"
-	"io/ioutil"
+	"net"
 	"net/http"
 	"os/exec"
+	"path"
 	"sync"
 )
 
 type GoApp struct {
-	*sync.Mutex
+	_ struct{}
+	sync.Mutex
 	Name   string `json:"name"`
 	GitURL string `json:"gitUrl"`
 	Status string `json:"status"`
-	dir    string
+	AppDir string `json:"appDir"`
 	hc     *http.Client
 	proc   *exec.Cmd
 }
 
-func (a *GoApp) Clone() error {
+func NewGoApp(name string, appDir string) *GoApp {
+	return &GoApp{Name: name, AppDir: appDir}
+}
+
+func (a *GoApp) Clone(gitURL string) error {
 	a.Lock()
 	defer a.Unlock()
 
-	_, err := git.PlainClone(a.dir, false, &git.CloneOptions{
+	a.GitURL = gitURL
+
+	_, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
 		Depth:        1,
 		SingleBranch: true,
@@ -42,20 +50,19 @@ func (a *GoApp) Start() error {
 	a.Lock()
 	defer a.Unlock()
 
-	buildCmd := exec.Command("go build -o " + a.Name)
-	buildCmd.Path = a.dir
+	buildCmd := exec.Command("go", "build", "-o", a.Name)
+	buildCmd.Dir = a.AppDir
 
 	if _, err := buildCmd.Output(); err != nil {
 		a.Status = "ERR:BUILD"
 		return err
 	}
 
-	sock, err := ioutil.TempFile(a.dir, "socket-")
-	if err != nil {
-		return err
-	}
+	exePath := path.Join(a.AppDir, a.Name)
+	sockPath := path.Join(a.AppDir, "sock")
 
-	runCmd := exec.Command(fmt.Sprintf("%s/%s -sock %s", a.dir, a.Name, sock.Name()))
+	runCmd := exec.Command(exePath, "-sock", sockPath)
+	runCmd.Dir = a.AppDir
 
 	if err := runCmd.Start(); err != nil {
 		a.Status = "ERR:RUN"
@@ -63,6 +70,12 @@ func (a *GoApp) Start() error {
 	}
 
 	a.proc = runCmd
+	a.hc = &http.Client{
+		Transport: &http.Transport{DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.Dial("unix", sockPath)
+		}},
+	}
+
 	a.Status = "STARTED"
 
 	return nil

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/JackKCWong/go-runner/internal/app"
+	"github.com/JackKCWong/go-runner/internal/web"
 	"io/ioutil"
 	"os"
 )
@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 
-	runner := app.NewGoRunner(tmp.Name(), ":8080")
+	runner := web.NewWebServer(tmp.Name(), ":8080")
 
 	err = runner.Start()
 	if err != nil {
