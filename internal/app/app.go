@@ -86,5 +86,6 @@ func (a *GoApp) Stop() error {
 }
 
 func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
+	request.Host = "sock"
 	return a.hc.Do(request)
 }

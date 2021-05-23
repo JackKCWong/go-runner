@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -21,6 +20,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	err := os.Remove(*unixsock)
+	if err != nil {
+		fmt.Printf("failed to remove in-use sock: %s, %q", *unixsock, err)
+	}
+
 	listener, err := net.Listen("unix", *unixsock)
 	if err != nil {
 		fmt.Printf("failed to listen on %s. err: %q\n", *unixsock, err)
@@ -30,7 +34,7 @@ func main() {
 	// remove socket when exit
 	{
 		sigchan := make(chan os.Signal)
-		signal.Notify(sigchan, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+		signal.Notify(sigchan, os.Interrupt, os.Kill)
 		go func() {
 			fmt.Println("press Ctrl+C to exit.")
 			<-sigchan
@@ -44,7 +48,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/greeting", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200)
-		w.Write([]byte("hello world\n"))
+		w.Write([]byte("hello world"))
 	})
 
 	server := http.Server{

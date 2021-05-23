@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 )
 
 func TestGoApp_Start(t *testing.T) {
@@ -18,7 +19,7 @@ func TestGoApp_Start(t *testing.T) {
 		return
 	}
 
-	goApp := NewGoApp("helloworld", path.Join(cwd, "examples", "hello-world"))
+	goApp := NewGoApp("helloworld", path.Join(cwd, "../..", "examples", "hello-world"))
 
 	err = goApp.Start()
 	if err != nil {
@@ -28,15 +29,16 @@ func TestGoApp_Start(t *testing.T) {
 
 	defer goApp.Stop()
 
+	time.Sleep(1 * time.Second)
 	assert.Equal("STARTED", goApp.Status)
 	assert.NotNil(goApp.proc)
 
-	req, _ := http.NewRequest("GET", "/greeting", nil)
+	req, _ := http.NewRequest("GET", "http://nonehost/greeting", nil)
 	resp, err := goApp.Handle(req)
 
 	assert.Nil(err)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	assert.Nil(err)
-	assert.Contains(body, "hello world")
+	assert.Equal(string(body), "hello world")
 }
