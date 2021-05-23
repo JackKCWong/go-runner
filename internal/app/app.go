@@ -5,6 +5,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path"
 	"sync"
@@ -25,13 +26,22 @@ func NewGoApp(name string, appDir string) *GoApp {
 	return &GoApp{Name: name, AppDir: appDir}
 }
 
-func (a *GoApp) Clone(gitURL string) error {
+func (a *GoApp) purgeLocal() error {
+	return os.RemoveAll(a.AppDir)
+}
+
+func (a *GoApp) Deploy(gitURL string) error {
 	a.Lock()
 	defer a.Unlock()
 
+	err := a.purgeLocal()
+	if err != nil {
+		return err
+	}
+
 	a.GitURL = gitURL
 
-	_, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
+	_, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
 		Depth:        1,
 		SingleBranch: true,
@@ -77,6 +87,25 @@ func (a *GoApp) Start() error {
 	}
 
 	a.Status = "STARTED"
+
+	return nil
+}
+
+func (a *GoApp) Reload() error {
+	a.Lock()
+	defer a.Unlock()
+
+	repo, err := git.PlainOpen(a.AppDir)
+	if err != nil {
+		return err
+	}
+
+	remote, err := repo.Remote("origin")
+	if err != nil {
+		return err
+	}
+
+	a.GitURL = remote.String()
 
 	return nil
 }

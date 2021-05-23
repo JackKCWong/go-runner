@@ -10,24 +10,18 @@ import (
 	"time"
 )
 
-func TestGoApp_Start(t *testing.T) {
+func TestGoRunner_Rehydrate(t *testing.T) {
 	assert := testify.New(t)
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	cwd, _ := os.Getwd()
 
-	goApp := NewGoApp("helloworld", path.Join(cwd, "../..", "examples", "apps", "hello-world"))
+	runner := &GoRunner{cwd: path.Join(cwd, "../..", "examples")}
 
-	err = goApp.Start()
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	err := runner.Rehydrate()
+	assert.Nil(err)
 
-	defer goApp.Stop()
+	goApp, err := runner.GetApp("hello-world")
+	assert.Nil(err)
 
 	time.Sleep(1 * time.Second)
 	assert.Equal("STARTED", goApp.Status)

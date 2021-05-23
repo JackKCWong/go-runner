@@ -2,6 +2,9 @@ package app
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"sync"
 )
@@ -18,8 +21,13 @@ type GoRunner struct {
 }
 
 func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
-
 	appDir := path.Join(r.cwd, "apps", appName)
+
+	if _, err := os.Stat(appDir); os.IsNotExist(err) {
+		fmt.Printf("registering app in [%s]", appDir)
+	} else {
+		return nil, fmt.Errorf("app with the same name already exist in [%s] ", appDir)
+	}
 
 	app := &GoApp{
 		Name:   appName,
@@ -27,7 +35,7 @@ func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 		AppDir: appDir,
 	}
 
-	if err := app.Clone(gitUrl); err != nil {
+	if err := app.Deploy(gitUrl); err != nil {
 		return nil, err
 	}
 
@@ -37,7 +45,6 @@ func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 }
 
 func (r *GoRunner) StartApp(appName string) error {
-
 	app, err := r.GetApp(appName)
 	if err != nil {
 		return err
@@ -53,4 +60,38 @@ func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
 	}
 
 	return app.(*GoApp), nil
+}
+
+//Rehydrate brings up all the apps already in the app dir
+func (r *GoRunner) Rehydrate() error {
+	dirs, err := ioutil.ReadDir(path.Join(r.cwd, "apps"))
+	if err != nil {
+		return err
+	}
+
+	for _, dir := range dirs {
+		if dir.IsDir() {
+			appDir := path.Join(r.cwd, "apps", dir.Name())
+			app := &GoApp{
+				Name:   dir.Name(),
+				AppDir: appDir,
+			}
+
+			//err = app.Reload()
+			//if err != nil {
+			//	fmt.Printf("error loading app [%#v]", app)
+			//	continue
+			//}
+
+			err = app.Start()
+			if err != nil {
+				fmt.Printf("error starting app [%#v]", app)
+				continue
+			}
+
+			r.apps.Store(app.Name, app)
+		}
+	}
+
+	return nil
 }

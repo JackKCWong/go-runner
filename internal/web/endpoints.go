@@ -27,6 +27,11 @@ func NewWebServer(wd, addr string) *GoRunnerWebAPI {
 }
 
 func (s *GoRunnerWebAPI) Start() error {
+	err := s.runner.Rehydrate()
+	if err != nil {
+		return err
+	}
+
 	s.server.GET("/api/:app", s.appStatus)
 	s.server.POST("/api/:app", s.deployApp)
 	s.server.DELETE("/api/:app", s.deleteApp)
