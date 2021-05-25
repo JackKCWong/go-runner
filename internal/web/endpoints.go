@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/app"
 	"github.com/labstack/echo/v4"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -36,7 +37,7 @@ func (s *GoRunnerWebAPI) Start() error {
 	s.server.POST("/api/:app", s.deployApp)
 	s.server.DELETE("/api/:app", s.deleteApp)
 
-	s.server.Any("/:app", s.proxyRequest)
+	s.server.Any("/:app/*", s.proxyRequest)
 
 	return s.server.Start(s.addr)
 }
@@ -95,7 +96,22 @@ func (s *GoRunnerWebAPI) proxyRequest(c echo.Context) error {
 		return err
 	}
 
-	err = resp.Write(c.Response().Writer)
+	defer resp.Body.Close()
+
+	c.Response().WriteHeader(resp.StatusCode)
+
+	for k, vals := range resp.Header {
+		for _, v := range vals {
+			c.Response().Header().Add(k, v)
+		}
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Response().Write(body)
 	if err != nil {
 		return err
 	}

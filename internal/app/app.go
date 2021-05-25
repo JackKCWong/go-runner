@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
 )
 
@@ -115,6 +116,11 @@ func (a *GoApp) Stop() error {
 }
 
 func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
-	request.Host = "sock"
-	return a.hc.Do(request)
+	req := request.Clone(context.TODO())
+	req.Host = "sock"
+	req.RequestURI = ""
+	req.URL.Scheme = "http"
+	req.URL.Host = "sock"
+	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/" + a.Name)
+	return a.hc.Do(req)
 }
