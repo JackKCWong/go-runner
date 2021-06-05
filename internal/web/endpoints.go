@@ -3,8 +3,10 @@ package web
 import (
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/app"
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
-	"io/ioutil"
+	"github.com/labstack/gommon/log"
+	"io"
 	"net/http"
 )
 
@@ -19,15 +21,15 @@ type errStatus struct {
 	Error error
 }
 
-func NewWebServer(wd, addr string) *GoRunnerWebAPI {
+func NewWebServer(wd string) *GoRunnerWebAPI {
 	return &GoRunnerWebAPI{
 		server: echo.New(),
-		addr:   addr,
 		runner: app.NewGoRunner(wd),
 	}
 }
 
-func (s *GoRunnerWebAPI) Start() error {
+func (s *GoRunnerWebAPI) Start(addr string) error {
+	s.server.Logger.SetLevel(log.DEBUG)
 	err := s.runner.Rehydrate()
 	if err != nil {
 		return err
@@ -39,7 +41,7 @@ func (s *GoRunnerWebAPI) Start() error {
 
 	s.server.Any("/:app/*", s.proxyRequest)
 
-	return s.server.Start(s.addr)
+	return s.server.Start(addr)
 }
 
 func (s *GoRunnerWebAPI) deleteApp(c echo.Context) error {
@@ -65,16 +67,30 @@ func (s *GoRunnerWebAPI) appStatus(c echo.Context) error {
 }
 
 func (s *GoRunnerWebAPI) deployApp(c echo.Context) error {
-	appName := c.Param("app")
-	gitUrl := c.Param("gitUrl")
-	goapp, err := s.runner.RegisterApp(appName, gitUrl)
+	params := new(DeployAppParams)
+	err := c.Bind(params)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errStatus{
+			nil, err,
+		})
+	}
+
+	validate := validator.New()
+	err = validate.Struct(params)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, errStatus{
+			nil, err,
+		})
+	}
+
+	goapp, err := s.runner.RegisterApp(params.App, params.GitUrl)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			goapp, err,
 		})
 	}
 
-	err = s.runner.StartApp(appName)
+	err = s.runner.StartApp(goapp.Name)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			goapp, err,
@@ -106,12 +122,7 @@ func (s *GoRunnerWebAPI) proxyRequest(c echo.Context) error {
 		}
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	_, err = c.Response().Write(body)
+	_, err = io.Copy(c.Response().Writer, resp.Body)
 	if err != nil {
 		return err
 	}

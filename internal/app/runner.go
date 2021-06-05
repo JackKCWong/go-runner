@@ -64,8 +64,14 @@ func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
 
 //Rehydrate brings up all the apps already in the app dir
 func (r *GoRunner) Rehydrate() error {
-	dirs, err := ioutil.ReadDir(path.Join(r.cwd, "apps"))
-	if err != nil {
+	appsDir := path.Join(r.cwd, "apps")
+	dirs, err := ioutil.ReadDir(appsDir)
+	if os.IsNotExist(err) {
+		err := os.Mkdir(appsDir, 0770)
+		if err != nil {
+			return err
+		}
+	} else {
 		return err
 	}
 

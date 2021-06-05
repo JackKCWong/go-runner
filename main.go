@@ -17,9 +17,9 @@ func main() {
 		return
 	}
 
-	runner := web.NewWebServer(tmp.Name(), ":8080")
+	runner := web.NewWebServer(tmp.Name())
 
-	err = runner.Start()
+	err = runner.Start(":8080")
 	if err != nil {
 		panic(err)
 		return
