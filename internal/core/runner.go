@@ -1,6 +1,7 @@
-package app
+package core
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ func NewGoRunner(cwd string) *GoRunner {
 }
 
 type GoRunner struct {
+	_ struct{}
 	apps sync.Map
 	cwd  string
 }
@@ -51,6 +53,20 @@ func (r *GoRunner) StartApp(appName string) error {
 	}
 
 	return app.Start()
+}
+
+func (r *GoRunner) StopApp(appName string) error {
+	app, err := r.GetApp(appName)
+	if err != nil {
+		return err
+	}
+
+	return app.Stop()
+}
+
+func (r *GoRunner) DeleteApp(appName string) error {
+	r.apps.Delete(appName)
+	return nil
 }
 
 func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
@@ -98,6 +114,15 @@ func (r *GoRunner) Rehydrate() error {
 			r.apps.Store(app.Name, app)
 		}
 	}
+
+	return nil
+}
+
+func (r *GoRunner) Stop(c context.Context) error {
+	r.apps.Range(func(key, value interface{}) bool {
+		_ = value.(*GoApp).Stop()
+		return true
+	})
 
 	return nil
 }
