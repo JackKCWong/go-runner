@@ -1,7 +1,6 @@
 package web
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	testify "github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -30,9 +30,10 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	assert.Eventuallyf(statusIsStarted("http://localhost:34567/api/health"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
-	reqParams, _ := json.Marshal(DeployAppParams{App: "hello-world", GitUrl: "git@github.com:JackKCWong/go-runner-hello-world.git"})
-	resp, err := http.DefaultClient.Post("http://localhost:34567/api/hello-world",
-		"application/json", bytes.NewReader(reqParams))
+	resp, err := http.DefaultClient.PostForm("http://localhost:34567/api/hello-world", url.Values{
+		"app":    {"hello-world"},
+		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
+	})
 
 	if err != nil {
 		assert.FailNowf("failed to deploy app", "%q", err)
@@ -85,7 +86,11 @@ func hasApp(app, url string) func() bool {
 			}
 
 			if len(status.Apps) == 1 {
-				return true
+				if status.Apps[0].Name == app {
+					return true
+				} else {
+					return false
+				}
 			}
 		}
 

@@ -33,7 +33,7 @@ func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 		Output:           nil,
 	}))
 	logger := e.Logger.(*log.Logger)
-	logger.SetHeader("${time_rfc3339} ${level}\t${line}\t")
+	logger.SetHeader("${time_rfc3339} ${level}\t${short_file}:${line}\t")
 	logger.SetLevel(log.DEBUG)
 
 	return &GoRunnerWebServer{

@@ -8,19 +8,20 @@ import (
 
 type (
 	DeployAppParams struct {
-		App    string `json:"app" validate:"required"`
-		GitUrl string `json:"gitUrl" validate:"required"`
+		App    string `json:"app" form:"app" validate:"required"`
+		GitUrl string `json:"gitUrl" form:"gitUrl" validate:"required"`
 	}
 
 	UpdateAppParams struct {
-		App    string `json:"app" validate:"required"`
-		Action string `json:"action" validate:"required"`
+		App    string `json:"app" form:"app" validate:"required"`
+		Action string `json:"action" form:"action" validate:"required"`
+	}
+
+	errStatus struct {
+		*core.GoApp
+		Error error
 	}
 )
-type errStatus struct {
-	*core.GoApp
-	Error error
-}
 
 func (e errStatus) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
