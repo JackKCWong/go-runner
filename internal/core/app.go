@@ -77,10 +77,11 @@ func (a *GoApp) Start() error {
 	}
 
 	exePath := path.Join(a.AppDir, a.Name)
+	//exePath := a.Name
 	sockPath := path.Join(a.AppDir, "sock")
 
 	runCmd := exec.Command(exePath, "-sock", sockPath)
-	runCmd.Dir = a.AppDir
+	//runCmd.Dir = a.AppDir
 
 	a.Cmd = runCmd.String()
 
