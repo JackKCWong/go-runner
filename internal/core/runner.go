@@ -22,13 +22,13 @@ type GoRunner struct {
 	cwd  string
 }
 
-const appsDir = "apps"
+const appsDir = "goapps"
 
 func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 	appDir := path.Join(r.cwd, appsDir, appName)
 
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		fmt.Printf("registering app in [%s]", appDir)
+		//fmt.Printf("registering app in [%s]", appDir)
 	} else {
 		return nil, fmt.Errorf("app with the same name already exist in [%s] ", appDir)
 	}
@@ -107,17 +107,23 @@ func (r *GoRunner) Rehydrate() error {
 			//	continue
 			//}
 
-			err = app.Start()
-			if err != nil {
-				fmt.Printf("error starting app [%#v]", app)
-				continue
-			}
+			_ = app.Start()
 
 			r.apps.Store(app.Name, app)
 		}
 	}
 
 	return nil
+}
+
+func (r *GoRunner) ListApps() []*GoApp {
+	apps := make([]*GoApp, 0)
+	r.apps.Range(func(_, app interface{}) bool {
+		apps = append(apps, app.(*GoApp))
+		return true
+	})
+
+	return apps
 }
 
 func (r *GoRunner) Stop(c context.Context) error {

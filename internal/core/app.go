@@ -15,12 +15,14 @@ import (
 type GoApp struct {
 	_ struct{}
 	sync.Mutex
-	Name   string `json:"name"`
-	GitURL string `json:"gitUrl"`
-	Status string `json:"status"`
-	AppDir string `json:"appDir"`
-	hc     *http.Client
-	proc   *exec.Cmd
+	Name    string `json:"name"`
+	GitURL  string `json:"gitUrl"`
+	Status  string `json:"status"`
+	AppDir  string `json:"appDir"`
+	Cmd     string `json:"cmd"`
+	LastErr error  `json:"lastError"`
+	hc      *http.Client
+	proc    *exec.Cmd
 }
 
 func NewGoApp(name string, appDir string) *GoApp {
@@ -37,6 +39,8 @@ func (a *GoApp) Deploy(gitURL string) error {
 
 	err := a.purgeLocal()
 	if err != nil {
+		a.Status = "ERR:DEPLOY"
+		a.LastErr = err
 		return err
 	}
 
@@ -49,6 +53,8 @@ func (a *GoApp) Deploy(gitURL string) error {
 	})
 
 	if err != nil {
+		a.Status = "ERR:GITCLONE"
+		a.LastErr = err
 		return err
 	}
 
@@ -66,6 +72,7 @@ func (a *GoApp) Start() error {
 
 	if _, err := buildCmd.Output(); err != nil {
 		a.Status = "ERR:BUILD"
+		a.LastErr = err
 		return err
 	}
 
@@ -75,8 +82,11 @@ func (a *GoApp) Start() error {
 	runCmd := exec.Command(exePath, "-sock", sockPath)
 	runCmd.Dir = a.AppDir
 
+	a.Cmd = runCmd.String()
+
 	if err := runCmd.Start(); err != nil {
-		a.Status = "ERR:RUN"
+		a.Status = "ERR:START"
+		a.LastErr = err
 		return err
 	}
 
@@ -121,6 +131,6 @@ func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
 	req.RequestURI = ""
 	req.URL.Scheme = "http"
 	req.URL.Host = "sock"
-	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/" + a.Name)
+	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/"+a.Name)
 	return a.hc.Do(req)
 }
