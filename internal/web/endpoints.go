@@ -26,7 +26,7 @@ type errStatus struct {
 	Error error
 }
 
-func NewWebServer(wd string) *GoRunnerWebServer {
+func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 	return &GoRunnerWebServer{
 		server:     echo.New(),
 		Status:     "NEW",

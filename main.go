@@ -1,25 +1,23 @@
 package main
 
 import (
+	"flag"
 	"github.com/JackKCWong/go-runner/internal/web"
-	"io/ioutil"
 	"os"
 )
 
 func main() {
-	wd, err := os.Getwd()
+	cwd, err := os.Getwd()
 	if err != nil {
 		return
 	}
 
-	tmp, err := ioutil.TempFile(wd, "go-runner")
-	if err != nil {
-		return
-	}
+	wd := flag.String("wd", cwd, "workding directory")
+	addr := flag.String("addr", ":8080", "local address to listen on. default to :8080")
 
-	runner := web.NewWebServer(tmp.Name())
+	runner := web.NewGoRunnerServer(*wd)
 
-	err = runner.Start(":8080")
+	err = runner.Start(*addr)
 	if err != nil {
 		panic(err)
 		return

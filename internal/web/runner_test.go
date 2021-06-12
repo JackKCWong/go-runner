@@ -23,7 +23,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	fmt.Printf("starting at %s", tempDir)
 
-	runner := NewWebServer(tempDir)
+	runner := NewGoRunnerServer(tempDir)
 	defer runner.Stop(context.Background())
 	go runner.Start(":34567")
 
