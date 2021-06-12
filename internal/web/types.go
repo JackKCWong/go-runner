@@ -5,4 +5,9 @@ type (
 		App    string `json:"app" validate:"required"`
 		GitUrl string `json:"gitUrl" validate:"required"`
 	}
+
+	UpdateAppParams struct {
+		App    string `json:"app" validate:"required"`
+		Action string `json:"action" validate:"required"`
+	}
 )

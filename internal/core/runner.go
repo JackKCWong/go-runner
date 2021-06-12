@@ -39,7 +39,7 @@ func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 		AppDir: appDir,
 	}
 
-	if err := app.Deploy(gitUrl); err != nil {
+	if err := app.FetchAndBuild(); err != nil {
 		return nil, err
 	}
 

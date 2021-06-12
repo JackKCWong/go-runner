@@ -8,3 +8,15 @@ Content-Type: application/json
 
 ###
 GET http://localhost:8080/api/health
+
+###
+GET http://localhost:8080/hello-world/greeting
+
+###
+PUT http://localhost:8080/api/hello-world
+Content-Type: application/json
+
+{
+  "app": "hello-world",
+  "action": "deploy"
+}

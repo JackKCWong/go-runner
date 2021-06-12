@@ -33,18 +33,18 @@ func (a *GoApp) purgeLocal() error {
 	return os.RemoveAll(a.AppDir)
 }
 
-func (a *GoApp) Deploy(gitURL string) error {
+func (a *GoApp) FetchAndBuild() error {
 	a.Lock()
 	defer a.Unlock()
 
 	err := a.purgeLocal()
 	if err != nil {
-		a.Status = "ERR:DEPLOY"
+		a.Status = "ERR:PURGE"
 		a.LastErr = err
 		return err
 	}
 
-	a.GitURL = gitURL
+	//a.GitURL = gitURL
 
 	_, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
@@ -134,4 +134,8 @@ func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
 	req.URL.Host = "sock"
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/"+a.Name)
 	return a.hc.Do(req)
+}
+
+func (a *GoApp) Pull() {
+
 }
