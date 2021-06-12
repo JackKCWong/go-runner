@@ -1,3 +1,4 @@
+### register
 POST http://localhost:8080/api/hello-world
 Content-Type: application/json
 
@@ -6,13 +7,13 @@ Content-Type: application/json
   "gitUrl": "git@github.com:JackKCWong/go-runner-hello-world.git"
 }
 
-###
+### get health
 GET http://localhost:8080/api/health
 
-###
+### get hello
 GET http://localhost:8080/hello-world/greeting
 
-###
+### deploy
 PUT http://localhost:8080/api/hello-world
 Content-Type: application/json
 
@@ -20,3 +21,6 @@ Content-Type: application/json
   "app": "hello-world",
   "action": "deploy"
 }
+
+### deploy
+DELETE http://localhost:8080/api/hello-world

@@ -29,22 +29,25 @@ func NewGoApp(name string, appDir string) *GoApp {
 	return &GoApp{Name: name, AppDir: appDir}
 }
 
-func (a *GoApp) purgeLocal() error {
-	return os.RemoveAll(a.AppDir)
-}
-
-func (a *GoApp) FetchAndBuild() error {
+func (a *GoApp) Purge() error {
 	a.Lock()
 	defer a.Unlock()
 
-	err := a.purgeLocal()
+	a.Status = "DELETED"
+
+	return os.RemoveAll(a.AppDir)
+}
+
+func (a *GoApp) Rebuild() error {
+	a.Lock()
+	defer a.Unlock()
+
+	err := os.RemoveAll(a.AppDir)
 	if err != nil {
 		a.Status = "ERR:PURGE"
 		a.LastErr = err
 		return err
 	}
-
-	//a.GitURL = gitURL
 
 	_, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
@@ -103,7 +106,7 @@ func (a *GoApp) Start() error {
 	return nil
 }
 
-func (a *GoApp) Reload() error {
+func (a *GoApp) Reattach() error {
 	a.Lock()
 	defer a.Unlock()
 
@@ -117,13 +120,19 @@ func (a *GoApp) Reload() error {
 		return err
 	}
 
-	a.GitURL = remote.String()
+	a.GitURL = remote.Config().URLs[0]
 
 	return nil
 }
 
 func (a *GoApp) Stop() error {
-	return a.proc.Process.Kill()
+	a.Lock()
+	defer a.Unlock()
+
+	err := a.proc.Process.Kill()
+	a.Status = "STOPPED"
+
+	return err
 }
 
 func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {

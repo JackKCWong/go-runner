@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
@@ -20,7 +21,7 @@ func (s *GoRunnerWebServer) deleteApp(c echo.Context) error {
 	appName := c.Param("app")
 	app, err := s.runner.GetApp(appName)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, errStatus{
+		return c.JSON(http.StatusNotFound, errStatus{
 			app, err,
 		})
 	}
@@ -32,12 +33,14 @@ func (s *GoRunnerWebServer) deleteApp(c echo.Context) error {
 		})
 	}
 
-	err = s.runner.DeleteApp(appName)
+	err = app.Purge()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			app, err,
 		})
 	}
+
+	s.runner.DeleteApp(appName)
 
 	return c.JSON(http.StatusOK, app)
 }
@@ -55,7 +58,7 @@ func (s *GoRunnerWebServer) appStatus(c echo.Context) error {
 }
 
 func (s *GoRunnerWebServer) registerApp(c echo.Context) error {
-	s.logger.Info("deploying app...")
+	s.logger.Info("new app...")
 	params := new(DeployAppParams)
 	err := c.Bind(params)
 	if err != nil {
@@ -75,7 +78,14 @@ func (s *GoRunnerWebServer) registerApp(c echo.Context) error {
 	}
 
 	s.logger.Infof("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
-	goapp, err := s.runner.RegisterApp(params.App, params.GitUrl)
+	goapp, err := s.runner.GetApp(params.App)
+	if goapp != nil {
+		return c.JSON(http.StatusBadRequest, errStatus{
+			goapp, errors.New("app already exists"),
+		})
+	}
+
+	goapp, err = s.runner.RegisterApp(params.App, params.GitUrl)
 	if err != nil {
 		s.logger.Errorf("error registering app. - app=%s, gitUrl=%s, err=%q", params.App, params.GitUrl, err)
 		return c.JSON(http.StatusInternalServerError, errStatus{

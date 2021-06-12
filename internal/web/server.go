@@ -3,7 +3,6 @@ package web
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/JackKCWong/go-runner/internal/core"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -20,18 +19,6 @@ type GoRunnerWebServer struct {
 	status string
 	wd     string
 	logger echo.Logger
-}
-
-type errStatus struct {
-	*core.GoApp
-	Error error
-}
-
-func (e *errStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		*core.GoApp
-		Error string
-	}{e.GoApp, fmt.Sprintf("%q", e.Error)})
 }
 
 func NewGoRunnerServer(wd string) *GoRunnerWebServer {

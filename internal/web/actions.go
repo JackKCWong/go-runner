@@ -8,7 +8,7 @@ import (
 
 func (s *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) error {
 	s.logger.Infof("deploying app... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
-	err := goapp.FetchAndBuild()
+	err := goapp.Rebuild()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			goapp, err,

@@ -39,10 +39,6 @@ func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
 		AppDir: appDir,
 	}
 
-	if err := app.FetchAndBuild(); err != nil {
-		return nil, err
-	}
-
 	r.apps.Store(appName, app)
 
 	return app, nil
@@ -66,9 +62,8 @@ func (r *GoRunner) StopApp(appName string) error {
 	return app.Stop()
 }
 
-func (r *GoRunner) DeleteApp(appName string) error {
+func (r *GoRunner) DeleteApp(appName string) {
 	r.apps.Delete(appName)
-	return nil
 }
 
 func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
@@ -84,13 +79,15 @@ func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
 func (r *GoRunner) Rehydrate() error {
 	appsDir := path.Join(r.cwd, appsDir)
 	dirs, err := ioutil.ReadDir(appsDir)
-	if os.IsNotExist(err) {
-		err := os.Mkdir(appsDir, 0770)
-		if err != nil {
+	if err != nil {
+		if os.IsNotExist(err) {
+			err := os.Mkdir(appsDir, 0770)
+			if err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
-	} else {
-		return err
 	}
 
 	for _, dir := range dirs {
@@ -101,12 +98,7 @@ func (r *GoRunner) Rehydrate() error {
 				AppDir: appDir,
 			}
 
-			//err = app.Reload()
-			//if err != nil {
-			//	fmt.Printf("error loading app [%#v]", app)
-			//	continue
-			//}
-
+			_ = app.Reattach()
 			_ = app.Start()
 
 			r.apps.Store(app.Name, app)
