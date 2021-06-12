@@ -48,6 +48,27 @@ func TestGoRunnerDeployApp(t *testing.T) {
 	assert.Equal(http.StatusOK, resp.StatusCode)
 	assert.Equal("hello world", string(body))
 
+	// test delete app
+	request, _ := http.NewRequest("DELETE", "http://localhost:34567/api/hello-world", nil)
+	resp, err = http.DefaultClient.Do(request)
+	assert.Nil(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert.Eventuallyf(statusIsNotFound("http://localhost:34567/api/hello-world"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+}
+
+func statusIsNotFound(url string) func() bool {
+	return func() bool {
+		resp, err := http.DefaultClient.Get(url)
+		if err != nil {
+			return false
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			return true
+		}
+
+		return false
+	}
 }
 
 func statusIsStarted(url string) func() bool {
