@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/web"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"os"
 	"os/signal"
 )
@@ -21,6 +21,7 @@ func main() {
 
 	flag.Parse()
 
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	runner := web.NewGoRunnerServer(*wd)
 
 	{
@@ -42,5 +43,5 @@ func main() {
 		return
 	}
 
-	log.Fatal().Err(runner.Serve()).Send()
+	runner.Serve()
 }

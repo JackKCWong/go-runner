@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/core"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/ziflex/lecho/v2"
@@ -30,7 +31,15 @@ type GoRunnerWebServer struct {
 func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 	e := echo.New()
 	e.HideBanner = true
-	e.Logger = lecho.From(log.Logger)
+	lechologger := lecho.From(log.Logger)
+	e.Logger = lechologger
+	e.Logger.SetLevel(1) // debug
+	e.Use(middleware.RequestID())
+	e.Use(lecho.Middleware(lecho.Config{
+		Logger:       lechologger,
+		Skipper:      nil,
+		RequestIDKey: "",
+	}))
 
 	return &GoRunnerWebServer{
 		echo:   e,
