@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/web"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 )
@@ -21,7 +22,7 @@ func main() {
 
 	flag.Parse()
 
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	log.Logger = zerolog.New(os.Stdout).With().Timestamp().Logger().Level(zerolog.DebugLevel)
 	runner := web.NewGoRunnerServer(*wd)
 
 	{

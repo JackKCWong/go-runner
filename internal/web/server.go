@@ -33,7 +33,6 @@ func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 	e.HideBanner = true
 	lechologger := lecho.From(log.Logger)
 	e.Logger = lechologger
-	e.Logger.SetLevel(1) // debug
 	e.Use(middleware.RequestID())
 	e.Use(lecho.Middleware(lecho.Config{
 		Logger:       lechologger,
