@@ -3,94 +3,128 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/JackKCWong/go-runner/internal/core"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/ziflex/lecho/v2"
+	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 )
 
 type GoRunnerWebServer struct {
 	_ struct{}
 	sync.Mutex
-	server *echo.Echo
+	echo   *echo.Echo
+	server *http.Server
 	runner *core.GoRunner
 	status string
 	wd     string
-	logger echo.Logger
+	logger *zerolog.Logger
 }
 
 func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 	e := echo.New()
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Skipper: nil,
-		Format: "${time_rfc3339} http\t${status}\t${method} ${uri} " +
-			"${latency_human}\t" +
-			"${bytes_in}b ${bytes_out}b" +
-			"\n",
-		CustomTimeFormat: "",
-		Output:           nil,
-	}))
-	logger := e.Logger.(*log.Logger)
-	logger.SetHeader("${time_rfc3339} ${level}\t${short_file}:${line}\t")
-	logger.SetLevel(log.DEBUG)
+	e.HideBanner = true
+	e.Logger = lecho.From(log.Logger)
 
 	return &GoRunnerWebServer{
-		server: e,
+		echo:   e,
 		status: "NEW",
 		wd:     wd,
 		runner: core.NewGoRunner(wd),
-		logger: logger,
+		logger: &log.Logger,
 	}
 }
 
-func (s *GoRunnerWebServer) Start(addr string) error {
-	s.logger.Info("starting go-runner server...")
-	s.Lock()
+func (runner *GoRunnerWebServer) Bootsrap(addr string) error {
+	runner.logger.Info().Msg("starting go-runner server...")
+	runner.Lock()
 
-	s.server.Logger.SetLevel(log.DEBUG)
-	s.logger.Info("rehydrating apps...")
-	err := s.runner.Rehydrate()
+	runner.logger.Info().Msg("rehydrating apps...")
+	err := runner.runner.Rehydrate()
 	if err != nil {
-		s.logger.Errorf("errror during rehydration - %q", err)
+		runner.logger.Error().Msgf("errror during rehydration - %q", err)
 		return err
 	}
 
-	s.setRoutes()
+	runner.setRoutes()
 
-	s.status = "STARTED"
-	s.logger.Info("go runner stared.")
-	s.Unlock()
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		runner.logger.Error().
+			Err(err).
+			Str("addr", addr).
+			Msg("cannot start listener")
 
-	return s.server.Start(addr)
-}
+		return err
+	}
 
-func (s *GoRunnerWebServer) Stop(c context.Context) error {
-	s.Lock()
-	defer s.Unlock()
-
-	_ = s.server.Shutdown(c)
-	_ = s.runner.Stop(c)
+	runner.echo.Listener = listener
+	runner.status = "STARTED"
+	runner.logger.Info().Msg("go runner stared.")
+	runner.Unlock()
 
 	return nil
 }
 
-func (s *GoRunnerWebServer) health(c echo.Context) error {
-	return c.JSON(http.StatusOK, s)
+func (runner *GoRunnerWebServer) Serve() error {
+	return runner.echo.Start("")
 }
 
-func (s *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
-	apps := s.runner.ListApps()
+func (runner *GoRunnerWebServer) Stop(c context.Context) error {
+	runner.Lock()
+	defer runner.Unlock()
+
+	_ = runner.echo.Shutdown(c)
+	_ = runner.runner.Stop(c)
+
+	return nil
+}
+
+func (runner *GoRunnerWebServer) health(c echo.Context) error {
+	return c.JSONPretty(http.StatusOK, runner, "  ")
+}
+
+func (runner *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
+	apps := runner.runner.ListApps()
+	addr := runner.echo.ListenerAddr()
 	return json.Marshal(struct {
 		Status string        `json:"status"`
 		Wd     string        `json:"workding_dir"`
-		Apps   []*core.GoApp `json:"apps"`
+		Addr   net.Addr      `json:"addr"`
+		Apps   []*core.GoApp `json:"apps,omitempty"`
 		NoApps int           `json:"no_of_apps"`
 	}{
-		s.status,
-		s.wd,
+		runner.status,
+		runner.wd,
+		addr,
 		apps,
 		len(apps),
 	})
+}
+
+func (runner *GoRunnerWebServer) port() uint16 {
+	runner.Lock()
+	defer runner.Unlock()
+
+	if runner.status != "STARTED" {
+		panic("server not started yet")
+	}
+
+	addr := runner.echo.ListenerAddr()
+	addrStr := addr.String()
+	parts := strings.Split(addrStr, ":")
+	port := parts[len(parts)-1]
+
+	p, err := strconv.ParseUint(port, 10, 16)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse listener address [%s], sth must be very wrong", addrStr))
+	}
+
+	return uint16(p)
 }

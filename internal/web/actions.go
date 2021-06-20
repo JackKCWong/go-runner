@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func (s *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) error {
-	s.logger.Infof("deploying app... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
+func (runner *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) error {
+	runner.logger.Info().Msgf("deploying app... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
 	err := goapp.Rebuild()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
@@ -22,7 +22,7 @@ func (s *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) error {
 		})
 	}
 
-	s.logger.Infof("app started. - app=%s", goapp.Name)
+	runner.logger.Info().Msgf("app started. - app=%s", goapp.Name)
 
 	return c.JSON(http.StatusOK, goapp)
 }

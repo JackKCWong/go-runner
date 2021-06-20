@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/JackKCWong/go-runner/internal/web"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 )
@@ -35,9 +36,11 @@ func main() {
 		}()
 	}
 
-	err = runner.Start(*addr)
+	err = runner.Bootsrap(*addr)
 	if err != nil {
 		panic(err)
 		return
 	}
+
+	log.Fatal().Err(runner.Serve()).Send()
 }

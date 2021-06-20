@@ -26,11 +26,15 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	runner := NewGoRunnerServer(tempDir)
 	defer runner.Stop(context.Background())
-	go runner.Start(":34567")
 
-	assert.Eventuallyf(statusIsStarted("http://localhost:34567/api/health"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	err = runner.Bootsrap(":0")
+	assert.Nil(err)
 
-	resp, err := http.DefaultClient.PostForm("http://localhost:34567/api/hello-world", url.Values{
+	go runner.Serve()
+
+	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+
+	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/hello-world"), url.Values{
 		"app":    {"hello-world"},
 		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
 	})
@@ -41,10 +45,10 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
-	assert.Eventuallyf(hasApp("hello-world", "http://localhost:34567/api/health"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
-	assert.Eventuallyf(statusIsStarted("http://localhost:34567/api/hello-world"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(hasApp("hello-world", runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
-	resp, err = http.DefaultClient.Get("http://localhost:34567/hello-world/greeting")
+	resp, err = http.DefaultClient.Get(runner.endpoint("/hello-world/greeting"))
 	assert.Nil(err)
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -53,11 +57,11 @@ func TestGoRunnerDeployApp(t *testing.T) {
 	assert.Equal("hello world", string(body))
 
 	// test delete app
-	request, _ := http.NewRequest("DELETE", "http://localhost:34567/api/hello-world", nil)
+	request, _ := http.NewRequest("DELETE", runner.endpoint("/api/hello-world"), nil)
 	resp, err = http.DefaultClient.Do(request)
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	assert.Eventuallyf(statusIsNotFound("http://localhost:34567/api/hello-world"), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(statusIsNotFound(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 }
 
 func hasApp(app, url string) func() bool {
@@ -147,4 +151,8 @@ func statusIsStarted(url string) func() bool {
 
 		return false
 	}
+}
+
+func (runner *GoRunnerWebServer) endpoint(path string) string {
+	return fmt.Sprintf("http://localhost:%d%s", runner.port(), path)
 }
