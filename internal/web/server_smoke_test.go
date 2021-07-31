@@ -153,6 +153,6 @@ func statusIsStarted(url string) func() bool {
 	}
 }
 
-func (runner *GoRunnerWebServer) endpoint(path string) string {
-	return fmt.Sprintf("http://localhost:%d%s", runner.port(), path)
+func (server *GoRunnerWebServer) endpoint(path string) string {
+	return fmt.Sprintf("http://localhost:%d%s", server.port(), path)
 }

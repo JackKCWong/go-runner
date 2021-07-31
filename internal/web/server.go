@@ -21,7 +21,6 @@ type GoRunnerWebServer struct {
 	_ struct{}
 	sync.Mutex
 	echo   *echo.Echo
-	server *http.Server
 	runner *core.GoRunner
 	status string
 	wd     string
@@ -49,22 +48,23 @@ func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 	}
 }
 
-func (runner *GoRunnerWebServer) Bootsrap(addr string) error {
-	runner.logger.Info().Msg("starting go-runner server...")
-	runner.Lock()
+func (server *GoRunnerWebServer) Bootsrap(addr string) error {
+	server.logger.Info().Msg("starting go-server server...")
+	server.Lock()
+	defer server.Unlock()
 
-	runner.logger.Info().Msg("rehydrating apps...")
-	err := runner.runner.Rehydrate()
+	server.logger.Info().Msg("rehydrating apps...")
+	err := server.runner.Rehydrate()
 	if err != nil {
-		runner.logger.Error().Msgf("errror during rehydration - %q", err)
+		server.logger.Error().Msgf("errror during rehydration - %q", err)
 		return err
 	}
 
-	runner.setRoutes()
+	server.setRoutes()
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		runner.logger.Error().
+		server.logger.Error().
 			Err(err).
 			Str("addr", addr).
 			Msg("cannot start listener")
@@ -72,35 +72,34 @@ func (runner *GoRunnerWebServer) Bootsrap(addr string) error {
 		return err
 	}
 
-	runner.echo.Listener = listener
-	runner.status = "STARTED"
-	runner.logger.Info().Msg("go runner stared.")
-	runner.Unlock()
+	server.echo.Listener = listener
+	server.status = "STARTED"
+	server.logger.Info().Msg("go server stared.")
 
 	return nil
 }
 
-func (runner *GoRunnerWebServer) Serve() error {
-	return runner.echo.Start("")
+func (server *GoRunnerWebServer) Serve() error {
+	return server.echo.Start("")
 }
 
-func (runner *GoRunnerWebServer) Stop(c context.Context) error {
-	runner.Lock()
-	defer runner.Unlock()
+func (server *GoRunnerWebServer) Stop(c context.Context) error {
+	server.Lock()
+	defer server.Unlock()
 
-	_ = runner.echo.Shutdown(c)
-	_ = runner.runner.Stop(c)
+	_ = server.echo.Shutdown(c)
+	_ = server.runner.Stop(c)
 
 	return nil
 }
 
-func (runner *GoRunnerWebServer) health(c echo.Context) error {
-	return c.JSONPretty(http.StatusOK, runner, "  ")
+func (server *GoRunnerWebServer) health(c echo.Context) error {
+	return c.JSONPretty(http.StatusOK, server, "  ")
 }
 
-func (runner *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
-	apps := runner.runner.ListApps()
-	addr := runner.echo.ListenerAddr()
+func (server *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
+	apps := server.runner.ListApps()
+	addr := server.echo.ListenerAddr()
 	return json.Marshal(struct {
 		Status string        `json:"status"`
 		Wd     string        `json:"workding_dir"`
@@ -108,23 +107,23 @@ func (runner *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
 		Apps   []*core.GoApp `json:"apps,omitempty"`
 		NoApps int           `json:"no_of_apps"`
 	}{
-		runner.status,
-		runner.wd,
+		server.status,
+		server.wd,
 		addr,
 		apps,
 		len(apps),
 	})
 }
 
-func (runner *GoRunnerWebServer) port() uint16 {
-	runner.Lock()
-	defer runner.Unlock()
+func (server *GoRunnerWebServer) port() uint16 {
+	server.Lock()
+	defer server.Unlock()
 
-	if runner.status != "STARTED" {
+	if server.status != "STARTED" {
 		panic("server not started yet")
 	}
 
-	addr := runner.echo.ListenerAddr()
+	addr := server.echo.ListenerAddr()
 	addrStr := addr.String()
 	parts := strings.Split(addrStr, ":")
 	port := parts[len(parts)-1]

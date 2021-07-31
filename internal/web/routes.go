@@ -8,18 +8,18 @@ import (
 	"net/http"
 )
 
-func (runner *GoRunnerWebServer) setRoutes() {
-	runner.echo.GET("/api/:app", runner.appStatus)
-	runner.echo.POST("/api/:app", runner.registerApp)
-	runner.echo.PUT("/api/:app", runner.updateApp)
-	runner.echo.DELETE("/api/:app", runner.deleteApp)
-	runner.echo.GET("/api/health", runner.health)
-	runner.echo.Any("/:app/*", runner.proxyRequest)
+func (server *GoRunnerWebServer) setRoutes() {
+	server.echo.GET("/api/:app", server.appStatus)
+	server.echo.POST("/api/:app", server.registerApp)
+	server.echo.PUT("/api/:app", server.updateApp)
+	server.echo.DELETE("/api/:app", server.deleteApp)
+	server.echo.GET("/api/health", server.health)
+	server.echo.Any("/:app/*", server.proxyRequest)
 }
 
-func (runner *GoRunnerWebServer) deleteApp(c echo.Context) error {
+func (server *GoRunnerWebServer) deleteApp(c echo.Context) error {
 	appName := c.Param("app")
-	app, err := runner.runner.GetApp(appName)
+	app, err := server.runner.GetApp(appName)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, errStatus{
 			app, err,
@@ -40,16 +40,16 @@ func (runner *GoRunnerWebServer) deleteApp(c echo.Context) error {
 		})
 	}
 
-	runner.runner.DeleteApp(appName)
+	server.runner.DeleteApp(appName)
 
 	return c.JSON(http.StatusOK, app)
 }
 
-func (runner *GoRunnerWebServer) appStatus(c echo.Context) error {
+func (server *GoRunnerWebServer) appStatus(c echo.Context) error {
 	appName := c.Param("app")
-	runner.logger.Debug().Msgf("get app status: appName=%s", appName)
+	server.logger.Debug().Msgf("get app status: appName=%s", appName)
 
-	goapp, err := runner.runner.GetApp(appName)
+	goapp, err := server.runner.GetApp(appName)
 	if err != nil {
 		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
 	}
@@ -57,12 +57,12 @@ func (runner *GoRunnerWebServer) appStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, goapp)
 }
 
-func (runner *GoRunnerWebServer) registerApp(c echo.Context) error {
-	runner.logger.Info().Msg("new app...")
+func (server *GoRunnerWebServer) registerApp(c echo.Context) error {
+	server.logger.Info().Msg("new app...")
 	params := new(DeployAppParams)
 	err := c.Bind(params)
 	if err != nil {
-		runner.logger.Error().Msg("malformed request")
+		server.logger.Error().Msg("malformed request")
 		return c.JSON(http.StatusBadRequest, errStatus{
 			nil, err,
 		})
@@ -71,37 +71,37 @@ func (runner *GoRunnerWebServer) registerApp(c echo.Context) error {
 	validate := validator.New()
 	err = validate.Struct(params)
 	if err != nil {
-		runner.logger.Error().Msg("invalid request params")
+		server.logger.Error().Msg("invalid request params")
 		return c.JSON(http.StatusBadRequest, errStatus{
 			nil, err,
 		})
 	}
 
-	runner.logger.Info().Msgf("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
-	goapp, err := runner.runner.GetApp(params.App)
+	server.logger.Info().Msgf("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
+	goapp, err := server.runner.GetApp(params.App)
 	if goapp != nil {
 		return c.JSON(http.StatusBadRequest, errStatus{
 			goapp, errors.New("app already exists"),
 		})
 	}
 
-	goapp, err = runner.runner.RegisterApp(params.App, params.GitUrl)
+	goapp, err = server.runner.RegisterApp(params.App, params.GitUrl)
 	if err != nil {
-		runner.logger.Error().Msgf("error registering app. - app=%s, gitUrl=%s, err=%q", params.App, params.GitUrl, err)
+		server.logger.Error().Msgf("error registering app. - app=%s, gitUrl=%s, err=%q", params.App, params.GitUrl, err)
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			goapp, err,
 		})
 	}
 
-	return runner.deployApp(c, goapp)
+	return server.deployApp(c, goapp)
 }
 
-func (runner *GoRunnerWebServer) updateApp(c echo.Context) error {
-	runner.logger.Info().Msg("updating app...")
+func (server *GoRunnerWebServer) updateApp(c echo.Context) error {
+	server.logger.Info().Msg("updating app...")
 	params := new(UpdateAppParams)
 	err := c.Bind(params)
 	if err != nil {
-		runner.logger.Error().Msg("malformed request")
+		server.logger.Error().Msg("malformed request")
 		return c.JSON(http.StatusBadRequest, errStatus{
 			nil, err,
 		})
@@ -110,15 +110,15 @@ func (runner *GoRunnerWebServer) updateApp(c echo.Context) error {
 	validate := validator.New()
 	err = validate.Struct(params)
 	if err != nil {
-		runner.logger.Error().Msg("invalid request params")
+		server.logger.Error().Msg("invalid request params")
 		return c.JSON(http.StatusBadRequest, errStatus{
 			nil, err,
 		})
 	}
 
-	app, err := runner.runner.GetApp(params.App)
+	app, err := server.runner.GetApp(params.App)
 	if err != nil {
-		runner.logger.Error().Msgf("app not found. app=%s", params.App)
+		server.logger.Error().Msgf("app not found. app=%s", params.App)
 		return c.JSON(http.StatusNotFound, errStatus{
 			nil, err,
 		})
@@ -126,7 +126,7 @@ func (runner *GoRunnerWebServer) updateApp(c echo.Context) error {
 
 	switch params.Action {
 	case "deploy":
-		return runner.deployApp(c, app)
+		return server.deployApp(c, app)
 	}
 
 	return c.String(http.StatusInternalServerError, "Unknown error")
