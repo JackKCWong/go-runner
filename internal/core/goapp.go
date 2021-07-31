@@ -2,7 +2,9 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"net"
 	"net/http"
 	"os"
@@ -20,13 +22,9 @@ type GoApp struct {
 	Status  string `json:"status"`
 	AppDir  string `json:"appDir"`
 	Cmd     string `json:"cmd"`
-	LastErr error  `json:"lastError"`
+	lastErr error
 	hc      *http.Client
 	proc    *exec.Cmd
-}
-
-func NewGoApp(name string, appDir string) *GoApp {
-	return &GoApp{Name: name, AppDir: appDir}
 }
 
 func (a *GoApp) Purge() error {
@@ -45,7 +43,23 @@ func (a *GoApp) Rebuild() error {
 	err := os.RemoveAll(a.AppDir)
 	if err != nil {
 		a.Status = "ERR:PURGE"
-		a.LastErr = err
+		a.lastErr = err
+		return err
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		a.Status = "ERR:USERHOME"
+		a.lastErr = err
+		return err
+	}
+
+	sshKeyFile := path.Join(homeDir, ".ssh", "id_rsa")
+	sshAuth, err := ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+
+	if err != nil {
+		a.Status = "ERR:SSHKEY"
+		a.lastErr = err
 		return err
 	}
 
@@ -53,11 +67,12 @@ func (a *GoApp) Rebuild() error {
 		URL:          a.GitURL,
 		Depth:        1,
 		SingleBranch: true,
+		Auth:         sshAuth,
 	})
 
 	if err != nil {
 		a.Status = "ERR:GITCLONE"
-		a.LastErr = err
+		a.lastErr = err
 		return err
 	}
 
@@ -70,12 +85,13 @@ func (a *GoApp) Start() error {
 	a.Lock()
 	defer a.Unlock()
 
-	buildCmd := exec.Command("go", "build", "-o", a.Name)
+	//buildCmd := exec.Command("go", "build", "-o", a.Name)
+	buildCmd := exec.Command("go", "build")
 	buildCmd.Dir = a.AppDir
 
 	if _, err := buildCmd.Output(); err != nil {
 		a.Status = "ERR:BUILD"
-		a.LastErr = err
+		a.lastErr = err
 		return err
 	}
 
@@ -84,13 +100,13 @@ func (a *GoApp) Start() error {
 	sockPath := path.Join(a.AppDir, "sock")
 
 	runCmd := exec.Command(exePath, "-sock", sockPath)
-	//runCmd.Dir = a.AppDir
+	runCmd.Dir, _ = os.Getwd()
 
 	a.Cmd = runCmd.String()
 
 	if err := runCmd.Start(); err != nil {
 		a.Status = "ERR:START"
-		a.LastErr = err
+		a.lastErr = err
 		return err
 	}
 
@@ -129,10 +145,15 @@ func (a *GoApp) Stop() error {
 	a.Lock()
 	defer a.Unlock()
 
-	err := a.proc.Process.Kill()
-	a.Status = "STOPPED"
+	if a.Status == "STARTED" {
+		if err := a.proc.Process.Kill(); err != nil {
+			return nil
+		}
 
-	return err
+		a.Status = "STOPPED"
+	}
+
+	return nil
 }
 
 func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
@@ -147,4 +168,22 @@ func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
 
 func (a *GoApp) Pull() {
 
+}
+
+func (a *GoApp) MarshalJSON() ([]byte, error) {
+	var errMsg string
+	if a.lastErr != nil {
+		errMsg = a.lastErr.Error()
+	}
+
+	return json.Marshal(struct {
+		Name    string `json:"name"`
+		GitURL  string `json:"gitUrl"`
+		Status  string `json:"status"`
+		AppDir  string `json:"appDir"`
+		Cmd     string `json:"cmd"`
+		LastErr string `json:"lastError"`
+	}{
+		a.Name, a.GitURL, a.Status, a.AppDir, a.Cmd, errMsg,
+	})
 }
