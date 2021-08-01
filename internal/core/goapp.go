@@ -3,28 +3,29 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-cmd/cmd"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
+	"time"
 )
 
 type GoApp struct {
 	_ struct{}
 	sync.Mutex
-	Name    string `json:"name"`
-	GitURL  string `json:"gitUrl"`
-	Status  string `json:"status"`
-	AppDir  string `json:"appDir"`
-	Cmd     string `json:"cmd"`
-	lastErr error
-	hc      *http.Client
-	proc    *exec.Cmd
+	Name        string
+	GitURL      string
+	Status      string
+	AppDir      string
+	lastErr     error
+	buildStatus cmd.Status
+	proc        *cmd.Cmd
+	hc          *http.Client
 }
 
 func (a *GoApp) Purge() error {
@@ -86,29 +87,25 @@ func (a *GoApp) Start() error {
 	defer a.Unlock()
 
 	//buildCmd := exec.Command("go", "build", "-o", a.Name)
-	buildCmd := exec.Command("go", "build")
+	buildCmd := cmd.NewCmd("go", "build")
 	buildCmd.Dir = a.AppDir
 
-	if _, err := buildCmd.Output(); err != nil {
+	a.buildStatus = <-buildCmd.Start()
+
+	if a.buildStatus.Error != nil {
 		a.Status = "ERR:BUILD"
-		a.lastErr = err
-		return err
+		a.lastErr = a.buildStatus.Error
+		return a.buildStatus.Error
 	}
 
 	exePath := path.Join(a.AppDir, a.Name)
 	//exePath := a.Name
 	sockPath := path.Join(a.AppDir, "sock")
 
-	runCmd := exec.Command(exePath, "-sock", sockPath)
+	runCmd := cmd.NewCmd(exePath, "-sock", sockPath)
 	runCmd.Dir, _ = os.Getwd()
-
-	a.Cmd = runCmd.String()
-
-	if err := runCmd.Start(); err != nil {
-		a.Status = "ERR:START"
-		a.lastErr = err
-		return err
-	}
+	runCmd.Start()
+	<-time.After(100 * time.Millisecond) // give a little time for PID to be ready
 
 	a.proc = runCmd
 	a.hc = &http.Client{
@@ -146,8 +143,8 @@ func (a *GoApp) Stop() error {
 	defer a.Unlock()
 
 	if a.Status == "STARTED" {
-		if err := a.proc.Process.Kill(); err != nil {
-			return nil
+		if err := a.proc.Stop(); err != nil {
+			return err
 		}
 
 		a.Status = "STOPPED"
@@ -176,14 +173,25 @@ func (a *GoApp) MarshalJSON() ([]byte, error) {
 		errMsg = a.lastErr.Error()
 	}
 
+	var status cmd.Status = cmd.Status{
+		PID:  -1,
+		Exit: -1,
+	}
+
+	if a.proc != nil {
+		status = a.proc.Status()
+	}
+
 	return json.Marshal(struct {
 		Name    string `json:"name"`
 		GitURL  string `json:"gitUrl"`
 		Status  string `json:"status"`
 		AppDir  string `json:"appDir"`
-		Cmd     string `json:"cmd"`
 		LastErr string `json:"lastError"`
+		PID     int    `json:"pid"`
+		Exit    int    `json:"exit"`
 	}{
-		a.Name, a.GitURL, a.Status, a.AppDir, a.Cmd, errMsg,
+		a.Name, a.GitURL, a.Status, a.AppDir, errMsg,
+		status.PID, status.Exit,
 	})
 }

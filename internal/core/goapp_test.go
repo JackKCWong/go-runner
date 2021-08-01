@@ -16,7 +16,6 @@ func TestCanMarshalIntoJSON(t *testing.T) {
 		GitURL:  "git@test.git",
 		Status:  "ERR:GITCLONE",
 		AppDir:  "./",
-		Cmd:     "./hello-world",
 		lastErr: errors.New("testError"),
 	}
 

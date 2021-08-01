@@ -10,22 +10,22 @@ import (
 	"sync"
 )
 
-func NewGoRunner(cwd string) *GoRunner {
+func NewGoRunner(wd string) *GoRunner {
 	return &GoRunner{
-		cwd: cwd,
+		wd: wd,
 	}
 }
 
 type GoRunner struct {
 	_    struct{}
 	apps sync.Map
-	cwd  string
+	wd   string
 }
 
-const appsDir = "goapps"
+const APPS_DIRNAME = "goapps"
 
 func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
-	appDir := path.Join(r.cwd, appsDir, appName)
+	appDir := path.Join(r.wd, APPS_DIRNAME, appName)
 
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
 		//fmt.Printf("registering app in [%s]", appDir)
@@ -77,7 +77,7 @@ func (r *GoRunner) GetApp(appName string) (*GoApp, error) {
 
 //Rehydrate brings up all the apps already in the app dir
 func (r *GoRunner) Rehydrate() error {
-	appsDir := path.Join(r.cwd, appsDir)
+	appsDir := path.Join(r.wd, APPS_DIRNAME)
 	dirs, err := ioutil.ReadDir(appsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -92,7 +92,7 @@ func (r *GoRunner) Rehydrate() error {
 
 	for _, dir := range dirs {
 		if dir.IsDir() {
-			appDir := path.Join(r.cwd, appsDir, dir.Name())
+			appDir := path.Join(appsDir, dir.Name())
 			app := &GoApp{
 				Name:   dir.Name(),
 				AppDir: appDir,
