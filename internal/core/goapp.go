@@ -102,8 +102,22 @@ func (a *GoApp) Start() error {
 	//exePath := a.Name
 	sockPath := path.Join(a.AppDir, "sock")
 
-	runCmd := cmd.NewCmd(exePath, "-sock", sockPath)
+	runCmd := cmd.NewCmdOptions(cmd.Options{
+		Buffered:  false,
+		Streaming: true,
+	}, exePath, "-sock", sockPath)
 	runCmd.Dir, _ = os.Getwd()
+	go func() {
+		for _ = range runCmd.Stdout {
+			// consume stdout to avoid blocking
+		}
+	}()
+	go func() {
+		for _ = range runCmd.Stderr {
+			// consume stderr to avoid blocking
+		}
+	}()
+
 	runCmd.Start()
 	<-time.After(100 * time.Millisecond) // give a little time for PID to be ready
 
