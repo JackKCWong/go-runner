@@ -1,6 +1,6 @@
 # go-runner
 
-A simplistic and naive imitation of [app-runner]() for go apps.
+A naive imitation of [app-runner](https://github.com/danielflower/app-runner) for Go app ([example](https://github.com/JackKCWong/go-runner-hello-world)).
 
 ## apis 
 
@@ -23,10 +23,12 @@ A simplistic and naive imitation of [app-runner]() for go apps.
 
 ## TODO
 
- * [ ] https support in front
- * [x] unixsocket support in the back
- * [ ] http support in the back
- * [ ] try using Namespace to isolate apps (ref: [Linux Namespace](https://medium.com/@teddyking/linux-namespaces-850489d3ccf))
+* [x] basic app CRUD
+* [x] unixsocket support in the back
+* [ ] endpoint for streaming stdout/stderr of an app 
+* [ ] https support in front
+* [ ] http support in the back
+* [ ] try using Namespace to isolate apps (ref: [Linux Namespace](https://medium.com/@teddyking/linux-namespaces-850489d3ccf))
     * [ ] PID namespace
     * [ ] filesystem
     * [ ] cpu

@@ -6,6 +6,7 @@ import (
 	"github.com/go-cmd/cmd"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/smallnest/ringbuffer"
 	"net"
 	"net/http"
 	"os"
@@ -26,6 +27,8 @@ type GoApp struct {
 	buildStatus cmd.Status
 	proc        *cmd.Cmd
 	hc          *http.Client
+	stdout      *ringbuffer.RingBuffer
+	stderr      *ringbuffer.RingBuffer
 }
 
 func (a *GoApp) Purge() error {
@@ -107,16 +110,22 @@ func (a *GoApp) Start() error {
 		Streaming: true,
 	}, exePath, "-unixsock", sockPath)
 	runCmd.Dir, _ = os.Getwd()
-	go func() {
-		for _ = range runCmd.Stdout {
+
+	a.stdout = ringbuffer.New(1024 * 100) // 100 kb
+	go func(buf *ringbuffer.RingBuffer) {
+		for line := range runCmd.Stdout {
 			// consume stdout to avoid blocking
+			_, _ = buf.WriteString(line)
 		}
-	}()
-	go func() {
-		for _ = range runCmd.Stderr {
+	}(a.stdout)
+
+	a.stderr = ringbuffer.New(1024 * 100) // 100 kb
+	go func(buf *ringbuffer.RingBuffer) {
+		for line := range runCmd.Stderr {
 			// consume stderr to avoid blocking
+			_, _ = buf.WriteString(line)
 		}
-	}()
+	}(a.stderr)
 
 	runCmd.Start()
 	<-time.After(100 * time.Millisecond) // give a little time for PID to be ready
