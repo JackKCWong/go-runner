@@ -10,6 +10,7 @@ require (
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/rs/zerolog v1.23.0
+	github.com/smallnest/ringbuffer v0.0.0-20210227121335-0a58434b36f2 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/ziflex/lecho/v2 v2.3.1
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

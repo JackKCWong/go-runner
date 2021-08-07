@@ -127,6 +127,8 @@ func (server *GoRunnerWebServer) updateApp(c echo.Context) error {
 	switch params.Action {
 	case "deploy":
 		return server.deployApp(c, app)
+	case "restart":
+		return server.restartApp(c, app)
 	}
 
 	return c.String(http.StatusInternalServerError, "Unknown error")

@@ -26,3 +26,24 @@ func (server *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) er
 
 	return c.JSON(http.StatusOK, goapp)
 }
+
+func (server *GoRunnerWebServer) restartApp(c echo.Context, goapp *core.GoApp) error {
+	server.logger.Info().Msgf("restarting app... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
+	err := goapp.Stop()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errStatus{
+			goapp, err,
+		})
+	}
+
+	err = goapp.Start()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errStatus{
+			goapp, err,
+		})
+	}
+
+	server.logger.Info().Msgf("app restarted. - app=%s", goapp.Name)
+
+	return c.JSON(http.StatusOK, goapp)
+}

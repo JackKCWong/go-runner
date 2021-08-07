@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -32,6 +33,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	go runner.Serve()
 
+	// test health
 	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
 	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/hello-world"), url.Values{
@@ -48,6 +50,16 @@ func TestGoRunnerDeployApp(t *testing.T) {
 	assert.Eventuallyf(hasApp("hello-world", runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
+	// test restart
+	restartReq, _ := http.NewRequest("PUT", runner.endpoint("/api/hello-world"), strings.NewReader("app=hello-world&action=restart"))
+	restartReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err = http.DefaultClient.Do(restartReq)
+	assert.Nil(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	assert.Eventuallyf(hasApp("hello-world", runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+
+	// test app
 	resp, err = http.DefaultClient.Get(runner.endpoint("/hello-world/greeting"))
 	assert.Nil(err)
 
@@ -57,8 +69,8 @@ func TestGoRunnerDeployApp(t *testing.T) {
 	assert.Equal("hello world", string(body))
 
 	// test delete app
-	request, _ := http.NewRequest("DELETE", runner.endpoint("/api/hello-world"), nil)
-	resp, err = http.DefaultClient.Do(request)
+	deleteReq, _ := http.NewRequest("DELETE", runner.endpoint("/api/hello-world"), nil)
+	resp, err = http.DefaultClient.Do(deleteReq)
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
 	assert.Eventuallyf(statusIsNotFound(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
