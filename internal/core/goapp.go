@@ -105,7 +105,7 @@ func (a *GoApp) Start() error {
 	runCmd := cmd.NewCmdOptions(cmd.Options{
 		Buffered:  false,
 		Streaming: true,
-	}, exePath, "-sock", sockPath)
+	}, exePath, "-unixsock", sockPath)
 	runCmd.Dir, _ = os.Getwd()
 	go func() {
 		for _ = range runCmd.Stdout {
