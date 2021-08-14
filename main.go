@@ -4,11 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/JackKCWong/go-runner/internal/web"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
 )
 
 func main() {
@@ -41,7 +42,6 @@ func main() {
 	err = runner.Bootsrap(*addr)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	runner.Serve()

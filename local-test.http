@@ -22,5 +22,15 @@ Content-Type: application/json
   "action": "deploy"
 }
 
-### deploy
+### restart 
+PUT http://localhost:8080/api/hello-world
+Content-Type: application/json
+
+{
+  "app": "hello-world",
+  "action": "restart"
+}
+
+
+### delete 
 DELETE http://localhost:8080/api/hello-world
