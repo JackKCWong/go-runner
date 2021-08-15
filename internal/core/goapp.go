@@ -82,24 +82,12 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
-	head, err := repo.Head()
+	err = a.attach(repo)
 	if err != nil {
-		a.Status = "ERR:GITLOG"
+		a.Status = "ERR:GITOPEN"
 		a.lastErr = err
 		return err
 	}
-
-	commit, err := repo.CommitObject(head.Hash())
-	if err != nil {
-		a.Status = "ERR:GITLOG"
-		a.lastErr = err
-		return err
-	}
-
-	hash := head.Hash().String()[0:7]
-	a.gitCommit = fmt.Sprintf("%s %s @ %s by %s",
-		hash, strings.TrimRight(commit.Message, "\n"),
-		commit.Author.String(), commit.Author.When.String())
 
 	a.Status = "NEW"
 
@@ -163,6 +151,29 @@ func (a *GoApp) Start() error {
 	return nil
 }
 
+func (a *GoApp) attach(repo *git.Repository) error {
+	head, err := repo.Head()
+	if err != nil {
+		a.Status = "ERR:GITLOG"
+		a.lastErr = err
+		return err
+	}
+
+	commit, err := repo.CommitObject(head.Hash())
+	if err != nil {
+		a.Status = "ERR:GITLOG"
+		a.lastErr = err
+		return err
+	}
+
+	hash := head.Hash().String()[0:7]
+	a.gitCommit = fmt.Sprintf("%s %s @ %s by %s",
+		hash, strings.TrimRight(commit.Message, "\n"),
+		commit.Author.String(), commit.Author.When.String())
+
+	return nil
+}
+
 func (a *GoApp) Reattach() error {
 	a.Lock()
 	defer a.Unlock()
@@ -172,14 +183,7 @@ func (a *GoApp) Reattach() error {
 		return err
 	}
 
-	remote, err := repo.Remote("origin")
-	if err != nil {
-		return err
-	}
-
-	a.GitURL = remote.Config().URLs[0]
-
-	return nil
+	return a.attach(repo)
 }
 
 func (a *GoApp) Stop() error {
