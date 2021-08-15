@@ -19,7 +19,9 @@ func init() {
 	rootCmd.PersistentFlags().String("server", "http://localhost:8080", "base url to go-runner server.")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 	viper.BindPFlag("server", rootCmd.PersistentFlags().Lookup("server"))
+
 	rootCmd.AddCommand(pushCmd)
+	rootCmd.AddCommand(deleteCmd)
 }
 
 func initConfig() {

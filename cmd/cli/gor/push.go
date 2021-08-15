@@ -2,14 +2,11 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path"
-	"time"
 
 	"github.com/JackKCWong/go-runner/internal/web"
 	"github.com/go-git/go-git/v5"
@@ -19,35 +16,35 @@ import (
 var pushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Push the current git repo to remote and deploy it as an app to go-runner",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		wd, err := os.Getwd()
 		if err != nil {
 			fmt.Printf("failed to get current working dir: %q\n", err)
-			return
+			return err
 		}
 
 		repo, err := git.PlainOpen(wd)
 		if err != nil {
 			fmt.Printf("failed to open current git repo: %q\n", err)
-			return
+			return err
 		}
 
 		remote, err := repo.Remote("origin")
 		if err != nil {
 			fmt.Printf("failed to open current git repo: %q\n", err)
-			return
+			return err
 		}
 
 		err = remote.Push(&git.PushOptions{})
 		if err != git.NoErrAlreadyUpToDate {
 			fmt.Printf("failed to push current git repo: %q\n", err)
-			return
+			return err
 		}
 
 		serverURL, err := cmd.Flags().GetString("server")
 		if err != nil {
 			fmt.Printf("failed to get server URL: %q\n", err)
-			return
+			return err
 		}
 
 		params := web.DeployAppParams{
@@ -65,36 +62,23 @@ var pushCmd = &cobra.Command{
 		reqBody, err := json.Marshal(params)
 		if err != nil {
 			fmt.Printf("failed to create request params: %q\n", err)
-			return
+			return err
 		}
 
 		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(reqBody))
 		if err != nil {
-			fmt.Printf("failed to create http request: %q\n", err)
-			return
+			fmt.Printf("failed to create request: %q\n", err)
+			return err
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-		defer cancel()
-		req = req.WithContext(ctx)
-		req.Header.Add("Content-Type", "application/json")
-
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := doREST(req)
 		if err != nil {
-			fmt.Printf("failed to get http response: %q\n", err)
-			return
+			fmt.Printf("failed to complete request: %q\n", err)
+			return err
 		}
 
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Printf("failed to read http response: %q\n", err)
-			return
-		}
+		fmt.Println(resp)
 
-		var prettyJSON bytes.Buffer
-		json.Indent(&prettyJSON, body, "", "  ")
-
-		fmt.Println(prettyJSON.String())
+		return nil
 	},
 }
