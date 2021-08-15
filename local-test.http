@@ -1,5 +1,5 @@
 ### register
-POST http://localhost:8080/api/hello-world
+POST http://localhost:8080/api/apps
 Content-Type: application/json
 
 {

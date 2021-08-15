@@ -120,7 +120,15 @@ func (r *GoRunner) ListApps() []*GoApp {
 
 func (r *GoRunner) Stop(c context.Context) error {
 	r.apps.Range(func(key, value interface{}) bool {
-		_ = value.(*GoApp).Stop()
+		a := value.(*GoApp)
+		err := a.Stop()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error stopping proc: app=%s, pid=%d\n",
+				a.Name,
+				a.proc.Status().PID)
+		}
+
 		return true
 	})
 

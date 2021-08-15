@@ -89,8 +89,8 @@ func (a *GoApp) Start() error {
 	a.Lock()
 	defer a.Unlock()
 
-	//buildCmd := exec.Command("go", "build", "-o", a.Name)
-	buildCmd := cmd.NewCmd("go", "build")
+	// buildCmd := exec.Command("go", "build", "-o", a.Name)
+	buildCmd := cmd.NewCmd("go", "build", "-o", a.Name)
 	buildCmd.Dir = a.AppDir
 
 	a.buildStatus = <-buildCmd.Start()
@@ -165,14 +165,13 @@ func (a *GoApp) Stop() error {
 	a.Lock()
 	defer a.Unlock()
 
-	if a.Status == "STARTED" {
+	if a.Status != "STOPPED" {
 		if err := a.proc.Stop(); err != nil {
 			return err
 		}
-
-		a.Status = "STOPPED"
 	}
 
+	a.Status = "STOPPED"
 	return nil
 }
 

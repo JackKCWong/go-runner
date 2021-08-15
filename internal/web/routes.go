@@ -9,11 +9,16 @@ import (
 )
 
 func (server *GoRunnerWebServer) setRoutes() {
+	// general api
+	server.echo.POST("/api/apps", server.registerApp)
+	server.echo.GET("/api/health", server.health)
+
+	// per app api
 	server.echo.GET("/api/:app", server.appStatus)
-	server.echo.POST("/api/:app", server.registerApp)
 	server.echo.PUT("/api/:app", server.updateApp)
 	server.echo.DELETE("/api/:app", server.deleteApp)
-	server.echo.GET("/api/health", server.health)
+
+	// access app
 	server.echo.Any("/:app/*", server.proxyRequest)
 }
 
