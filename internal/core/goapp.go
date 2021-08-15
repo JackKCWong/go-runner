@@ -22,7 +22,6 @@ type GoApp struct {
 	sync.Mutex
 	Name        string
 	GitURL      string
-	gitHead     string
 	gitCommit   string
 	Status      string
 	AppDir      string

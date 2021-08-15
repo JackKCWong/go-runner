@@ -5,7 +5,7 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
 ## get started
 
 ```
-go install github.com/JackKCWong/go-runner/cmd/...
+go install github.com/JackKCWong/go-runner/cmd/...@latest
 ```
 
 ## apis 
