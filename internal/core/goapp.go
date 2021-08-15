@@ -21,6 +21,7 @@ type GoApp struct {
 	sync.Mutex
 	Name        string
 	GitURL      string
+	GitHead     string
 	Status      string
 	AppDir      string
 	lastErr     error
@@ -67,7 +68,7 @@ func (a *GoApp) Rebuild() error {
 	// 	return err
 	// }
 
-	_, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
+	repo, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
 		Depth:        1,
 		SingleBranch: true,
@@ -80,6 +81,14 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
+	head, err := repo.Head()
+	if err != nil {
+		a.Status = "ERR:GITLOG"
+		a.lastErr = err
+		return err
+	}
+
+	a.GitHead = head.Hash().String()[0:7]
 	a.Status = "NEW"
 
 	return nil
@@ -207,13 +216,14 @@ func (a *GoApp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Name    string `json:"name"`
 		GitURL  string `json:"gitUrl"`
+		GitHead string `json:"gitHead"`
 		Status  string `json:"status"`
 		AppDir  string `json:"appDir"`
 		LastErr string `json:"lastError"`
 		PID     int    `json:"pid"`
 		Exit    int    `json:"exit"`
 	}{
-		a.Name, a.GitURL, a.Status, a.AppDir, errMsg,
+		a.Name, a.GitURL, a.GitHead, a.Status, a.AppDir, errMsg,
 		status.PID, status.Exit,
 	})
 }

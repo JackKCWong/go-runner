@@ -36,7 +36,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 	// test health
 	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
-	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/hello-world"), url.Values{
+	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/apps"), url.Values{
 		"app":    {"hello-world"},
 		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
 	})
