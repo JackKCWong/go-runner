@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -21,7 +22,8 @@ type GoApp struct {
 	sync.Mutex
 	Name        string
 	GitURL      string
-	GitHead     string
+	gitHead     string
+	gitCommit   string
 	Status      string
 	AppDir      string
 	lastErr     error
@@ -88,7 +90,18 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
-	a.GitHead = head.Hash().String()[0:7]
+	commit, err := repo.CommitObject(head.Hash())
+	if err != nil {
+		a.Status = "ERR:GITLOG"
+		a.lastErr = err
+		return err
+	}
+
+	hash := head.Hash().String()[0:7]
+	a.gitCommit = fmt.Sprintf("%s %s @ %s by %s",
+		hash, strings.TrimRight(commit.Message, "\n"),
+		commit.Author.String(), commit.Author.When.String())
+
 	a.Status = "NEW"
 
 	return nil
@@ -214,16 +227,16 @@ func (a *GoApp) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		Name    string `json:"name"`
-		GitURL  string `json:"gitUrl"`
-		GitHead string `json:"gitHead"`
-		Status  string `json:"status"`
-		AppDir  string `json:"appDir"`
-		LastErr string `json:"lastError"`
-		PID     int    `json:"pid"`
-		Exit    int    `json:"exit"`
+		Name      string `json:"name"`
+		GitURL    string `json:"gitUrl"`
+		GitCommit string `json:"gitCommit"`
+		Status    string `json:"status"`
+		AppDir    string `json:"appDir"`
+		LastErr   string `json:"lastError"`
+		PID       int    `json:"pid"`
+		Exit      int    `json:"exit"`
 	}{
-		a.Name, a.GitURL, a.GitHead, a.Status, a.AppDir, errMsg,
+		a.Name, a.GitURL, a.gitCommit, a.Status, a.AppDir, errMsg,
 		status.PID, status.Exit,
 	})
 }
