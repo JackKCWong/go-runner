@@ -4,8 +4,15 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
 
 ## get started
 
-```
+```bash
 go install github.com/JackKCWong/go-runner/cmd/...@latest
+mkdir your-app
+cd your-app
+git init # init git repo
+gor init # create an app from example 
+# commit and push your code to remote
+gor register # for deploying 1st time, or 
+gor push # for updates
 ```
 
 ## apis 
