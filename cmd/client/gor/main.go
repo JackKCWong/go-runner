@@ -20,7 +20,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 	viper.BindPFlag("server", rootCmd.PersistentFlags().Lookup("server"))
 
-	rootCmd.AddCommand(newCmd)
+	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(registerCmd)
 	rootCmd.AddCommand(pushCmd)
 	rootCmd.AddCommand(deleteCmd)
 }

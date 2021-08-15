@@ -13,9 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var pushCmd = &cobra.Command{
-	Use:   "push",
-	Short: "Push the current git repo to remote and deploy it as an app to go-runner",
+var registerCmd = &cobra.Command{
+	Use:     "register",
+	Aliases: []string{"reg", "pub"},
+	Short:   "Push the the current git repo to remote origin and register it to go-runner",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		verbose, err := cmd.Flags().GetBool("verbose")
 		if err != nil {
@@ -41,11 +42,13 @@ var pushCmd = &cobra.Command{
 			return err
 		}
 
-		appName := path.Base(wd)
-		gitURL := remote.Config().URLs[0]
+		params := web.DeployAppParams{
+			App:    path.Base(wd),
+			GitUrl: remote.Config().URLs[0],
+		}
 
 		if verbose {
-			fmt.Printf("verbose: pushing to remote origin: %s\n", gitURL)
+			fmt.Printf("verbose: pushing to remote origin: %s\n", params.GitUrl)
 		}
 
 		err = remote.Push(&git.PushOptions{})
@@ -60,25 +63,20 @@ var pushCmd = &cobra.Command{
 			return err
 		}
 
-		endpoint := fmt.Sprintf("%s/api/%s", serverURL, appName)
+		endpoint := fmt.Sprintf("%s/api/apps", serverURL)
 
 		if verbose {
-			fmt.Printf("verbose: deploying to %s... app=%s\n",
-				endpoint, appName)
+			fmt.Printf("verbose: register to %s... app=%s, gitUrl=%s\n",
+				endpoint, params.App, params.GitUrl)
 		}
 
-		params := web.UpdateAppParams{
-			App:    appName,
-			Action: "deploy",
-		}
-
-		reqBody, err := json.Marshal(params)
+		reqPayload, err := json.Marshal(params)
 		if err != nil {
 			fmt.Printf("failed to create request params: %q\n", err)
 			return err
 		}
 
-		req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(reqBody))
+		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(reqPayload))
 		if err != nil {
 			fmt.Printf("failed to create request: %q\n", err)
 			return err

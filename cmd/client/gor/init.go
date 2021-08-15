@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var newCmd = &cobra.Command{
-	Use:   "new [module name]",
-	Short: "New a example app server using unixsocket",
+var initCmd = &cobra.Command{
+	Use:   "init [module name]",
+	Short: "Initialize a example app server using unixsocket",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if _, err := os.Stat("main.go"); err == nil {
 			// file exists
