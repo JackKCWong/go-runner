@@ -9,8 +9,8 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "gor",
-	Short: "Gor is a cli for go-runner to do CRUD for apps.",
+	Use:   "gorun",
+	Short: "gorun is a cli for go-runner to do CRUD for apps.",
 }
 
 func init() {
