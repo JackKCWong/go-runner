@@ -46,13 +46,13 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
 	cwd, _ := os.Getwd()
-	helloWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../go-runner-hello-world"))
+	helloWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../../examples/go-runner-hello-world"))
 	if err != nil {
 		fmt.Printf("failed to get git repo dir: %q\n", err)
 		return
 	}
 
-	hiWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../hi-world"))
+	hiWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../../examples/go-runner-nihao-shijie"))
 	if err != nil {
 		fmt.Printf("failed to get git repo dir: %q\n", err)
 		return
@@ -69,11 +69,11 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		},
 		{
 			url.Values{
-				"app":    {"hi-world"},
+				"app":    {"nihao-shijie"},
 				"gitUrl": {"file://" + hiWorldAbsDir},
 			},
-			"/hi",
-			"Hello, 世界",
+			"/nihao",
+			"nihao, 世界",
 		},
 	}
 

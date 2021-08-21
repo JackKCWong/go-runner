@@ -16,6 +16,11 @@ func (server *GoRunnerWebServer) proxyRequest(c echo.Context) error {
 		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
 	}
 
+	if goapp.Status != "STARTED" {
+		server.logger.Debug().Msgf("app not started. - app=%s, status=%s", goapp.Name, goapp.Status)
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("app not started. - app=%s, status=%s", goapp.Name, goapp.Status))
+	}
+
 	request := c.Request()
 	server.logger.Info().Msgf("handling request... - url=%s", request.URL)
 	resp, err := goapp.Handle(request)
