@@ -47,8 +47,8 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
-	assert.Eventuallyf(hasApp("hello-world", runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
-	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(hasApp("hello-world", runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for app to deploy")
+	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/hello-world")), 1*time.Second, 100*time.Millisecond, "timeout waiting for app to start")
 
 	// test restart
 	restartReq, _ := http.NewRequest("PUT", runner.endpoint("/api/hello-world"), strings.NewReader("app=hello-world&action=restart"))
@@ -101,8 +101,8 @@ func hasApp(app, url string) func() bool {
 				return false
 			}
 
-			if len(status.Apps) == 1 {
-				if status.Apps[0].Name == app {
+			for _, a := range status.Apps {
+				if a.Name == app {
 					return true
 				} else {
 					return false

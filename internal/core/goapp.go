@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -190,14 +191,16 @@ func (a *GoApp) Stop() error {
 	a.Lock()
 	defer a.Unlock()
 
-	if a.Status != "STOPPED" {
+	if a.Status == "STARTED" {
 		if err := a.proc.Stop(); err != nil {
 			return err
 		}
+
+		a.Status = "STOPPED"
+		return nil
 	}
 
-	a.Status = "STOPPED"
-	return nil
+	return errors.New("app not started: status=" + a.Status)
 }
 
 func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
@@ -215,6 +218,9 @@ func (a *GoApp) Pull() {
 }
 
 func (a *GoApp) MarshalJSON() ([]byte, error) {
+	a.Lock()
+	defer a.Unlock()
+
 	var errMsg string
 	if a.lastErr != nil {
 		errMsg = a.lastErr.Error()
