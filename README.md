@@ -9,10 +9,10 @@ go install github.com/JackKCWong/go-runner/cmd/...@latest
 mkdir your-app
 cd your-app
 git init # init git repo
-gor init # create an app from example 
+gorun new # create an app from example 
 # commit and push your code to remote
-gor register # for deploying 1st time, or 
-gor push # for updates
+gorun register # for deploying 1st time, or 
+gorun push # for updates
 ```
 
 ## apis 
@@ -39,7 +39,7 @@ gor push # for updates
 * [x] basic app CRUD
 * [x] unixsocket support in the back
 * [ ] endpoint for streaming stdout/stderr of an app 
-* [ ] a cli client `gor`
+* [ ] a cli client `gorun`
     * [x] init
     * [x] register
     * [x] push
