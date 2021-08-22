@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -29,7 +31,7 @@ type GoApp struct {
 	lastErr     error
 	buildStatus cmd.Status
 	proc        *cmd.Cmd
-	hc          *http.Client
+	proxy       *httputil.ReverseProxy
 	stdout      *ringbuffer.RingBuffer
 	stderr      *ringbuffer.RingBuffer
 }
@@ -141,11 +143,16 @@ func (a *GoApp) Start() error {
 	<-time.After(100 * time.Millisecond) // give a little time for PID to be ready
 
 	a.proc = runCmd
-	a.hc = &http.Client{
-		Transport: &http.Transport{DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-			return net.Dial("unix", sockPath)
-		}},
+	targetURL, err := url.Parse("http://sock")
+	if err != nil {
+		return err
 	}
+
+	a.proxy = httputil.NewSingleHostReverseProxy(targetURL)
+	a.proxy.Transport = &http.Transport{
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.Dial("unix", sockPath)
+		}}
 
 	a.Status = "STARTED"
 
@@ -203,14 +210,9 @@ func (a *GoApp) Stop() error {
 	return errors.New("app not started: status=" + a.Status)
 }
 
-func (a *GoApp) Handle(request *http.Request) (*http.Response, error) {
-	req := request.Clone(context.TODO())
-	req.Host = "sock"
-	req.RequestURI = ""
-	req.URL.Scheme = "http"
-	req.URL.Host = "sock"
+func (a *GoApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, "/"+a.Name)
-	return a.hc.Do(req)
+	a.proxy.ServeHTTP(rw, req)
 }
 
 func (a *GoApp) Pull() {

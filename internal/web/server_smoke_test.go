@@ -4,16 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/JackKCWong/go-runner/internal/core"
-	testify "github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/JackKCWong/go-runner/internal/core"
+	testify "github.com/stretchr/testify/assert"
 )
+
+func getExampleRepo(name string) string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	dir, err := filepath.Abs(path.Join(cwd, "../../examples/", name))
+	if err != nil {
+		fmt.Printf("failed to get git repo dir: %q\n", err)
+		panic(err)
+	}
+
+	return dir
+}
 
 func TestGoRunnerDeployApp(t *testing.T) {
 	assert := testify.New(t)
@@ -38,7 +56,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/apps"), url.Values{
 		"app":    {"hello-world"},
-		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
+		"gitUrl": {getExampleRepo("go-runner-hello-world")},
 	})
 
 	if err != nil {

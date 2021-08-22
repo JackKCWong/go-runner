@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -45,24 +43,11 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 	// test health
 	assert.Eventuallyf(statusIsStarted(runner.endpoint("/api/health")), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
-	cwd, _ := os.Getwd()
-	helloWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../../examples/go-runner-hello-world"))
-	if err != nil {
-		fmt.Printf("failed to get git repo dir: %q\n", err)
-		return
-	}
-
-	hiWorldAbsDir, err := filepath.Abs(path.Join(cwd, "../../examples/go-runner-nihao-shijie"))
-	if err != nil {
-		fmt.Printf("failed to get git repo dir: %q\n", err)
-		return
-	}
-
 	apps := []testApp{
 		{
 			url.Values{
 				"app":    {"hello-world"},
-				"gitUrl": {"file://" + helloWorldAbsDir},
+				"gitUrl": {getExampleRepo("go-runner-hello-world")},
 			},
 			"/greeting",
 			"hello world",
@@ -70,7 +55,7 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		{
 			url.Values{
 				"app":    {"nihao-shijie"},
-				"gitUrl": {"file://" + hiWorldAbsDir},
+				"gitUrl": {getExampleRepo("go-runner-nihao-shijie")},
 			},
 			"/nihao",
 			"nihao, 世界",
