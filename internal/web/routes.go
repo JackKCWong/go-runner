@@ -15,6 +15,8 @@ func (server *GoRunnerWebServer) setRoutes() {
 
 	// per app api
 	server.echo.GET("/api/:app", server.appStatus)
+	server.echo.GET("/api/:app/stdout", server.appStdout)
+	server.echo.GET("/api/:app/stderr", server.appStderr)
 	server.echo.PUT("/api/:app", server.updateApp)
 	server.echo.DELETE("/api/:app", server.deleteApp)
 
@@ -141,4 +143,36 @@ func (server *GoRunnerWebServer) updateApp(c echo.Context) error {
 	return c.JSON(http.StatusInternalServerError, errStatus{
 		nil, err,
 	})
+}
+
+func (server *GoRunnerWebServer) appStdout(c echo.Context) error {
+	appName := c.Param("app")
+	server.logger.Debug().Msgf("get app stdout - appName=%s", appName)
+
+	goapp, err := server.runner.GetApp(appName)
+	if err != nil {
+		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
+	}
+
+	w := c.Response().Writer
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Length", "-1")
+
+	buf := make(chan string, 1000)
+	goapp.StdoutTo(buf)
+
+	for line := range buf {
+		_, err := w.Write([]byte(line))
+		if err != nil {
+			goapp.UnsubscribeStdout(buf)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (server *GoRunnerWebServer) appStderr(c echo.Context) error {
+	return nil
 }

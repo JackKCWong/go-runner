@@ -141,11 +141,7 @@ func statusIsNotFound(url string) func() bool {
 
 		defer resp.Body.Close()
 
-		if resp.StatusCode == http.StatusNotFound {
-			return true
-		}
-
-		return false
+		return resp.StatusCode == http.StatusNotFound
 	}
 }
 

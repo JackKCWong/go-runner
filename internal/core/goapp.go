@@ -17,7 +17,6 @@ import (
 
 	"github.com/go-cmd/cmd"
 	"github.com/go-git/go-git/v5"
-	"github.com/smallnest/ringbuffer"
 )
 
 type GoApp struct {
@@ -32,8 +31,8 @@ type GoApp struct {
 	buildStatus cmd.Status
 	proc        *cmd.Cmd
 	proxy       *httputil.ReverseProxy
-	stdout      *ringbuffer.RingBuffer
-	stderr      *ringbuffer.RingBuffer
+	stdout      *topic
+	stderr      *topic
 }
 
 func (a *GoApp) Purge() error {
@@ -123,19 +122,17 @@ func (a *GoApp) Start() error {
 	}, exePath, "-unixsock", sockPath)
 	runCmd.Dir, _ = os.Getwd()
 
-	a.stdout = ringbuffer.New(1024 * 100) // 100 kb
-	go func(buf *ringbuffer.RingBuffer) {
+	a.stdout = newTopic()
+	go func(t *topic) {
 		for line := range runCmd.Stdout {
-			// consume stdout to avoid blocking
-			_, _ = buf.WriteString(line)
+			t.Publish(line)
 		}
 	}(a.stdout)
 
-	a.stderr = ringbuffer.New(1024 * 100) // 100 kb
-	go func(buf *ringbuffer.RingBuffer) {
+	a.stderr = newTopic()
+	go func(t *topic) {
 		for line := range runCmd.Stderr {
-			// consume stderr to avoid blocking
-			_, _ = buf.WriteString(line)
+			t.Publish(line)
 		}
 	}(a.stderr)
 
@@ -194,17 +191,20 @@ func (a *GoApp) Reattach() error {
 	return a.attach(repo)
 }
 
-func (a *GoApp) Stop() error {
+func (a *GoApp) Stop() (retErr error) {
 	a.Lock()
 	defer a.Unlock()
 
 	if a.Status == "STARTED" {
 		if err := a.proc.Stop(); err != nil {
-			return err
+			retErr = err
 		}
 
+		a.stdout.Close()
+		a.stderr.Close()
+
 		a.Status = "STOPPED"
-		return nil
+		return
 	}
 
 	return errors.New("app not started: status=" + a.Status)
@@ -217,6 +217,22 @@ func (a *GoApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (a *GoApp) Pull() {
 
+}
+
+func (a *GoApp) StdoutTo(c chan<- string) {
+	a.stdout.Subscribe(c)
+}
+
+func (a *GoApp) StderrTo(c chan<- string) {
+	a.stderr.Subscribe(c)
+}
+
+func (a *GoApp) UnsubscribeStdout(c chan<- string) {
+	a.stdout.Unsubscribe(c)
+}
+
+func (a *GoApp) UnsubscribeStderr(c chan<- string) {
+	a.stderr.Unsubscribe(c)
 }
 
 func (a *GoApp) MarshalJSON() ([]byte, error) {
