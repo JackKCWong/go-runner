@@ -1,4 +1,4 @@
-package main 
+package main
 
 import (
 	"bytes"
@@ -24,8 +24,8 @@ func doREST(req *http.Request) (string, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
+	body, err := readAll(resp.Body)
+	if err != io.EOF {
 		fmt.Printf("failed to read http response: %q\n", err)
 		return "", err
 	}
@@ -34,4 +34,19 @@ func doREST(req *http.Request) (string, error) {
 	json.Indent(&prettyJSON, body, "", "  ")
 
 	return prettyJSON.String(), nil
+}
+
+func readAll(in io.ReadCloser) ([]byte, error) {
+	var out bytes.Buffer
+	var buf = make([]byte, 4*1024)
+	for {
+		n, err := in.Read(buf)
+		if n > 0 {
+			out.Write(buf[:n])
+		}
+
+		if err != nil {
+			return out.Bytes(), err
+		}
+	}
 }

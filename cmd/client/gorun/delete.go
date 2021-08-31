@@ -26,7 +26,7 @@ var deleteCmd = &cobra.Command{
 			appName = args[0]
 		} else {
 			if verbose {
-				fmt.Printf("verbose: use basename as appName")
+				fmt.Printf("verbose: use basename as appName\n")
 			}
 
 			wd, err := os.Getwd()
@@ -49,6 +49,10 @@ var deleteCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("failed to create request: %q\n", err)
 			return err
+		}
+
+		if verbose {
+			fmt.Printf("verbose: sending request: %s %s\n", req.Method, req.URL)
 		}
 
 		resp, err := doREST(req)
