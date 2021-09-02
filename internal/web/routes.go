@@ -33,21 +33,17 @@ func (server *GoRunnerWebServer) deleteApp(c echo.Context) error {
 		})
 	}
 
-	err = app.Stop()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, errStatus{
-			app, err,
-		})
-	}
 
+	app.Stop()
 	err = app.Purge()
+	server.runner.DeleteApp(appName)
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, errStatus{
 			app, err,
 		})
 	}
 
-	server.runner.DeleteApp(appName)
 
 	return c.JSON(http.StatusOK, app)
 }
@@ -113,6 +109,8 @@ func (server *GoRunnerWebServer) updateApp(c echo.Context) error {
 			nil, err,
 		})
 	}
+
+	params.App = c.Param("app")
 
 	validate := validator.New()
 	err = validate.Struct(params)
