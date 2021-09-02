@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	"github.com/JackKCWong/go-runner/internal/web"
 	"github.com/rs/zerolog"
@@ -40,7 +41,9 @@ func main() {
 			fmt.Println("Ctrl+C pressed.")
 			close(sigchan)
 			fmt.Println("stopping go-runner")
-			runner.Stop(context.Background())
+			c, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			runner.Stop(c)
 			fmt.Println("go-runner stopped")
 		}()
 	}

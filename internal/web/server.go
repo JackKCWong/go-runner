@@ -87,16 +87,16 @@ func (server *GoRunnerWebServer) Stop(c context.Context) error {
 	server.Lock()
 	defer server.Unlock()
 
-	server.logger.Info().Msg("shutting down web server...")
-	err := server.echo.Shutdown(c)
+	server.logger.Info().Msg("shutting down go-runner...")
+	err := server.runner.Stop(c)
 	if err != nil {
-	  server.logger.Info().Err(err).Msg("error during shutdown web server")
+		server.logger.Info().Err(err).Msg("error during shutdown go-runner")
 	}
 
-	server.logger.Info().Msg("shutting down go-runner...")
-	err = server.runner.Stop(c)
+	server.logger.Info().Msg("shutting down web server...")
+	err = server.echo.Shutdown(c)
 	if err != nil {
-	  server.logger.Info().Err(err).Msg("error during shutdown go-runner")
+		server.logger.Info().Err(err).Msg("error during shutdown web server")
 	}
 
 	return nil

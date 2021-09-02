@@ -11,7 +11,7 @@ Content-Type: application/json
 GET http://localhost:8080/api/health
 
 ### get hello
-GET http://localhost:8080/go-runner-hello-world/greeting
+GET http://localhost:8080/hello-world/greeting
 
 ### deploy
 PUT http://localhost:8080/api/hello-world

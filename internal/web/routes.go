@@ -154,16 +154,17 @@ func (server *GoRunnerWebServer) appStdout(c echo.Context) error {
 		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
 	}
 
-	w := c.Response().Writer
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "text/plain")
-	w.Header().Add("Content-Length", "-1")
+	resp := c.Response()
+	resp.Header().Add("Content-Type", "text/plain")
+	resp.Header().Add("Transfer-Encoding", "chunked")
+	resp.Flush()
 
 	buf := make(chan string, 1000)
 	goapp.StdoutTo(buf)
 
 	for line := range buf {
-		_, err := w.Write([]byte(line))
+		_, err := resp.Write([]byte(line))
+		resp.Flush()
 		if err != nil {
 			goapp.UnsubscribeStdout(buf)
 			return err
