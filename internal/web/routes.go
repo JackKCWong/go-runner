@@ -1,11 +1,13 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (server *GoRunnerWebServer) setRoutes() {
@@ -33,7 +35,6 @@ func (server *GoRunnerWebServer) deleteApp(c echo.Context) error {
 		})
 	}
 
-
 	app.Stop()
 	err = app.Purge()
 	server.runner.DeleteApp(appName)
@@ -43,7 +44,6 @@ func (server *GoRunnerWebServer) deleteApp(c echo.Context) error {
 			app, err,
 		})
 	}
-
 
 	return c.JSON(http.StatusOK, app)
 }
@@ -152,17 +152,21 @@ func (server *GoRunnerWebServer) appStdout(c echo.Context) error {
 		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
 	}
 
-	resp := c.Response()
-	resp.Header().Add("Content-Type", "text/plain")
-	resp.Header().Add("Transfer-Encoding", "chunked")
-	resp.Flush()
-
 	buf := make(chan string, 1000)
 	goapp.StdoutTo(buf)
 
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c.Response().WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(c.Response())
+
 	for line := range buf {
-		_, err := resp.Write([]byte(line))
-		resp.Flush()
+		enc.Encode(struct {
+			Stdout string
+		}{
+			line,
+		})
+
+		c.Response().Flush()
 		if err != nil {
 			goapp.UnsubscribeStdout(buf)
 			return err

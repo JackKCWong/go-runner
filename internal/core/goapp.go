@@ -123,18 +123,18 @@ func (a *GoApp) Start() error {
 	runCmd.Dir, _ = os.Getwd()
 
 	a.stdout = newTopic()
-	go func(t *topic) {
+	go func() {
 		for line := range runCmd.Stdout {
-			t.Publish(line)
+			a.stdout.Publish(line)
 		}
-	}(a.stdout)
+	}()
 
 	a.stderr = newTopic()
-	go func(t *topic) {
+	go func() {
 		for line := range runCmd.Stderr {
-			t.Publish(line)
+			a.stderr.Publish(line)
 		}
-	}(a.stderr)
+	}()
 
 	runCmd.Start()
 	<-time.After(100 * time.Millisecond) // give a little time for PID to be ready

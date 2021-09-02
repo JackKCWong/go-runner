@@ -1,6 +1,9 @@
 package core
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type topic struct {
 	m           *sync.Mutex
@@ -16,12 +19,13 @@ func newTopic() *topic {
 
 func (t *topic) Subscribe(subscription chan<- string) {
 	t.m.Lock()
-	defer t.m.Unlock()
-
 	t.subscribers = append(t.subscribers, subscription)
+	t.m.Unlock()
+	fmt.Printf("subscriber: %d, %p\n", len(t.subscribers), t)
+
 }
 
-func (t topic) Publish(msg string) {
+func (t *topic) Publish(msg string) {
 	t.m.Lock()
 	defer t.m.Unlock()
 

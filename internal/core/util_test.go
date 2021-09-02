@@ -1,8 +1,10 @@
 package core
 
 import (
-	"github.com/JackKCWong/go-runner/internal/util"
+	"sync"
 	"testing"
+
+	"github.com/JackKCWong/go-runner/internal/util"
 )
 
 func TestTopic(t *testing.T) {
@@ -14,9 +16,15 @@ func TestTopic(t *testing.T) {
 	c1 := make(chan string, 1)
 	c2 := make(chan string, 10)
 
-	topic.Subscribe(c0)
-	topic.Subscribe(c1)
-	topic.Publish("hello")
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		wg.Done()
+		topic.Subscribe(c0)
+		topic.Subscribe(c1)
+		topic.Publish("hello")
+	}()
+	wg.Wait()
 	expect.Equal(0, len(c0))
 	expect.Equal(1, len(c1))
 
