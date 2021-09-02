@@ -23,15 +23,12 @@ func (t *topic) Subscribe(subscription chan<- string) {
 
 func (t topic) Publish(msg string) {
 	t.m.Lock()
-	subscribers := t.subscribers
-	t.m.Unlock()
+	defer t.m.Unlock()
 
-	for _, s := range subscribers {
+	for _, s := range t.subscribers {
 		select {
 		case s <- msg:
-			break
 		default:
-			break
 		}
 	}
 }
