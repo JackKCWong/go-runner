@@ -26,7 +26,7 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
 * [x] basic app CRUD
 * [x] unixsocket support in the back
 * [x] endpoint for streaming stdout/stderr of an app 
-* [ ] a cli client `gorun`
+* [ ] a cli client [gorun](https://github.com/JackKCWong/go-runner/tree/main/cmd/client/gorun)
     * [x] init
     * [x] register
     * [x] push
