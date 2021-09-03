@@ -15,20 +15,15 @@ GET http://localhost:8080/nihao-shijie/nihao
 
 ### deploy
 PUT http://localhost:8080/api/nihao-shijie
-Content-Type: application/json
+Content-Type: application/x-www-form-urlencoded
 
-{
-  "action": "deploy"
-}
+action=deploy
 
 ### restart 
 PUT http://localhost:8080/api/nihao-shijie
-Content-Type: application/json
+Content-Type: application/x-www-form-urlencoded
 
-{
-  "action": "restart"
-}
-
+action=restart
 
 ### delete 
 DELETE http://localhost:8080/api/nihao-shijie

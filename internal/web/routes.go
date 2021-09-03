@@ -109,8 +109,6 @@ func (server *GoRunnerWebServer) updateApp(c echo.Context) error {
 		})
 	}
 
-	params.App = c.Param("app")
-
 	validate := validator.New()
 	err = validate.Struct(params)
 	if err != nil {

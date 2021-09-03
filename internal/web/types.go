@@ -8,13 +8,13 @@ import (
 
 type (
 	DeployAppParams struct {
-		App    string `json:"app" form:"app" validate:"required"`
-		GitUrl string `json:"gitUrl" form:"gitUrl" validate:"required"`
+		App    string `param:"app" json:"app" form:"app" validate:"required"`
+		GitUrl string `param:"gitUrl" json:"gitUrl" form:"gitUrl" validate:"required"`
 	}
 
 	UpdateAppParams struct {
-		App    string `json:"app" form:"app" validate:"required"`
-		Action string `json:"action" form:"action" validate:"required"`
+		App    string `param:"app" json:"app" form:"app" validate:"required"`
+		Action string `param:"action" json:"action" form:"action" validate:"required"`
 	}
 
 	errStatus struct {
