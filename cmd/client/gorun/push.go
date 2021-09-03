@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/JackKCWong/go-runner/internal/util"
 	"github.com/JackKCWong/go-runner/internal/web"
 	"github.com/go-git/go-git/v5"
 	"github.com/spf13/cobra"
@@ -48,7 +49,12 @@ var pushCmd = &cobra.Command{
 			fmt.Printf("verbose: pushing to remote origin: %s\n", gitURL)
 		}
 
-		err = remote.Push(&git.PushOptions{})
+		sshAuth, err := util.NewSshPubKeyAuth()
+		if err != nil {
+			return err
+		}	
+
+		err = remote.Push(&git.PushOptions{Auth: sshAuth})
 		if err != git.NoErrAlreadyUpToDate {
 			fmt.Printf("failed to push current git repo: %q\n", err)
 			return err
