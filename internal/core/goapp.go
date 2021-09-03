@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-cmd/cmd"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
 type GoApp struct {
@@ -55,27 +56,37 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
-	// homeDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	a.Status = "ERR:USERHOME"
-	// 	a.lastErr = err
-	// 	return err
-	// }
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		a.Status = "ERR:USERHOME"
+		a.lastErr = err
+		return err
+	}
 
-	// sshKeyFile := path.Join(homeDir, ".ssh", "id_rsa")
-	// sshAuth, err := ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+	sshKeyFile := path.Join(homeDir, ".ssh", "id_rsa")
+	_, err = os.Stat(sshKeyFile)
+	if os.IsNotExist(err) {
+		sshKeyFile = path.Join(homeDir, ".ssh", "id_ed25519")
+	}
 
-	// if err != nil {
-	// 	a.Status = "ERR:SSHKEY"
-	// 	a.lastErr = err
-	// 	return err
-	// }
+	_, err = os.Stat(sshKeyFile)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("cannot find id_rsa or id_ed25519 in ~/.ssh :%w", err)
+	}
+
+	sshAuth, err := ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+
+	if err != nil {
+		a.Status = "ERR:SSHKEY"
+		a.lastErr = err
+		return err
+	}
 
 	repo, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:          a.GitURL,
 		Depth:        1,
 		SingleBranch: true,
-		// Auth:         sshAuth,
+		Auth:         sshAuth,
 	})
 
 	if err != nil {

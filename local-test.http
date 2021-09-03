@@ -1,10 +1,18 @@
 ### register
 POST http://localhost:8080/api/apps
+Content-Type: application/x-www-form-urlencoded
+
+app=nihao-shijie
+&gitUrl=./examples/go-runner-nihao-shijie
+
+
+### register
+POST http://localhost:8080/api/apps
 Content-Type: application/json
 
 {
-  "app": "nihao-shijie",
-  "gitUrl": "./examples/go-runner-nihao-shijie"
+  "app": "hello-world",
+  "gitUrl": "git@github.com:JackKCWong/go-runner-hello-world.git"
 }
 
 ### get health
@@ -27,3 +35,6 @@ action=restart
 
 ### delete 
 DELETE http://localhost:8080/api/nihao-shijie
+
+### delete 
+DELETE http://localhost:8080/api/hello-world
