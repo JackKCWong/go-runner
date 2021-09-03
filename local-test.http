@@ -2,8 +2,7 @@
 POST http://localhost:8080/api/apps
 Content-Type: application/x-www-form-urlencoded
 
-app=nihao-shijie
-&gitUrl=./examples/go-runner-nihao-shijie
+app=nihao-shijie&gitUrl=./examples/go-runner-nihao-shijie
 
 
 ### register

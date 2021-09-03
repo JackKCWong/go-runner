@@ -164,9 +164,12 @@ func (a *GoApp) attach(repo *git.Repository) error {
 	}
 
 	hash := head.Hash().String()[0:7]
-	a.gitCommit = fmt.Sprintf("%s %s @ %s by %s",
+	a.gitCommit = fmt.Sprintf("%s %s by %s at %s",
 		hash, strings.TrimRight(commit.Message, "\n"),
 		commit.Author.String(), commit.Author.When.String())
+
+	remote, err := repo.Remote("origin")
+	a.GitURL = remote.Config().URLs[0]
 
 	return nil
 }
