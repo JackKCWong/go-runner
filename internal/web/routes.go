@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -155,17 +154,11 @@ func (server *GoRunnerWebServer) appStdout(c echo.Context) error {
 	buf := make(chan string, 1000)
 	goapp.StdoutTo(buf)
 
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
 	c.Response().WriteHeader(http.StatusOK)
-	enc := json.NewEncoder(c.Response())
 
 	for line := range buf {
-		enc.Encode(struct {
-			Stdout string
-		}{
-			line,
-		})
-
+		fmt.Fprintf(c.Response().Writer, "%s\n", line)
 		c.Response().Flush()
 		if err != nil {
 			goapp.UnsubscribeStdout(buf)
@@ -177,5 +170,28 @@ func (server *GoRunnerWebServer) appStdout(c echo.Context) error {
 }
 
 func (server *GoRunnerWebServer) appStderr(c echo.Context) error {
+	appName := c.Param("app")
+	server.logger.Debug().Msgf("get app stderr - appName=%s", appName)
+
+	goapp, err := server.runner.GetApp(appName)
+	if err != nil {
+		return c.String(http.StatusNotFound, fmt.Sprintf("%q", err))
+	}
+
+	buf := make(chan string, 1000)
+	goapp.StderrTo(buf)
+
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextPlain)
+	c.Response().WriteHeader(http.StatusOK)
+
+	for line := range buf {
+		fmt.Fprintf(c.Response().Writer, "%s\n", line)
+		c.Response().Flush()
+		if err != nil {
+			goapp.UnsubscribeStderr(buf)
+			return err
+		}
+	}
+
 	return nil
 }

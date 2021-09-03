@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -19,10 +18,9 @@ func newTopic() *topic {
 
 func (t *topic) Subscribe(subscription chan<- string) {
 	t.m.Lock()
+	defer t.m.Unlock()
+	
 	t.subscribers = append(t.subscribers, subscription)
-	t.m.Unlock()
-	fmt.Printf("subscriber: %d, %p\n", len(t.subscribers), t)
-
 }
 
 func (t *topic) Publish(msg string) {
