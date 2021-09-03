@@ -2,18 +2,6 @@
 
 A naive imitation of [app-runner](https://github.com/danielflower/app-runner) for Go app ([example](https://github.com/JackKCWong/go-runner-hello-world)).
 
-## get started
-
-```bash
-go install github.com/JackKCWong/go-runner/cmd/...@latest
-mkdir your-app
-cd your-app
-git init # init git repo
-gorun new # create an app from example 
-# commit and push your code to remote
-gorun register # for deploying 1st time, or 
-gorun push # for updates
-```
 
 ## apis 
 
@@ -31,6 +19,10 @@ gorun push # for updates
   
     `action` - `deploy` or `restart`
 
+* `GET /api/:app/stdout` stream stdout 
+
+* `GET /api/:app/stderr` stream stderr
+
 * `ANY /:app/*` access go-apps
 
 
@@ -38,7 +30,7 @@ gorun push # for updates
 
 * [x] basic app CRUD
 * [x] unixsocket support in the back
-* [ ] endpoint for streaming stdout/stderr of an app 
+* [x] endpoint for streaming stdout/stderr of an app 
 * [ ] a cli client `gorun`
     * [x] init
     * [x] register
@@ -47,7 +39,7 @@ gorun push # for updates
     * [ ] status
     * [ ] curl
 * [ ] https support in front
-* [ ] http support in the back
+* [ ] tcp socket support in the back
 * [ ] try using Namespace to isolate apps (ref: [Linux Namespace](https://medium.com/@teddyking/linux-namespaces-850489d3ccf))
     * [ ] PID namespace
     * [ ] filesystem
