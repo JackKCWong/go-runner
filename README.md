@@ -8,20 +8,15 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
 * `GET /api/health` return health of go-runner
   
 * `POST /api/apps` register and deploy a go-app
-  
     `gitUrl` - git url to the app being deployed
-  
     `app` - app name
   
 * `PUT /api/:app` operate a go-app
-  
-    `app` - app name
-  
     `action` - `deploy` or `restart`
 
-* `GET /api/:app/stdout` stream stdout 
+* `GET /api/:app/stdout` stream app stdout 
 
-* `GET /api/:app/stderr` stream stderr
+* `GET /api/:app/stderr` stream app stderr
 
 * `ANY /:app/*` access go-apps
 
