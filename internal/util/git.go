@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
-func NewSshPubKeyAuth() (transport.AuthMethod, error) {
+func newSshPubKeyAuth() (transport.AuthMethod, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
@@ -27,4 +27,14 @@ func NewSshPubKeyAuth() (transport.AuthMethod, error) {
 	}
 
 	return ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+}
+
+func GetGitAuth() (transport.AuthMethod, error) {
+	agentAuth, err := ssh.NewSSHAgentAuth("")
+	if err != nil {
+		// fallback to key auth
+		return newSshPubKeyAuth()
+	}
+
+	return agentAuth, nil
 }

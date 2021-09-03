@@ -38,3 +38,6 @@ DELETE http://localhost:8080/api/nihao-shijie
 
 ### delete 
 DELETE http://localhost:8080/api/hello-world
+
+### delete
+DELETE http://localhost:8080/api/go-runner-hello-world

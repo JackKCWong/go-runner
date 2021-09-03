@@ -56,7 +56,7 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
-	sshAuth, err := util.NewSshPubKeyAuth()
+	sshAuth, err := util.GetGitAuth()
 	if err != nil {
 		a.Status = "ERR:SSHKEY"
 		a.lastErr = err

@@ -49,10 +49,10 @@ var pushCmd = &cobra.Command{
 			fmt.Printf("verbose: pushing to remote origin: %s\n", gitURL)
 		}
 
-		sshAuth, err := util.NewSshPubKeyAuth()
+		sshAuth, err := util.GetGitAuth()
 		if err != nil {
 			return err
-		}	
+		}
 
 		err = remote.Push(&git.PushOptions{Auth: sshAuth})
 		if err != git.NoErrAlreadyUpToDate {
