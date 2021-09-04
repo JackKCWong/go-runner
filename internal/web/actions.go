@@ -8,7 +8,12 @@ import (
 
 func (server *GoRunnerWebServer) deployApp(c echo.Context, goapp *core.GoApp) error {
 	server.logger.Info().Msgf("deploying app... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
-	err := goapp.Rebuild()
+	err := goapp.Stop()
+	if err != nil {
+		server.logger.Info().Err(err).Msgf("failed to stop, continue anyway. app=%s", goapp.Name)
+	}
+
+	err = goapp.Rebuild()
 	if err != nil {
 		server.logger.Error().Err(err).Msgf("failed to build. app=%s", goapp.Name)
 		return c.JSON(http.StatusInternalServerError, errStatus{

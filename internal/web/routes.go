@@ -79,20 +79,18 @@ func (server *GoRunnerWebServer) registerApp(c echo.Context) error {
 		})
 	}
 
-	server.logger.Info().Msgf("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
 	goapp, _ := server.runner.GetApp(params.App)
-	if goapp != nil {
-		return c.JSON(http.StatusBadRequest, errStatus{
-			goapp, errors.New("app already exists"),
-		})
-	}
-
-	goapp, err = server.runner.RegisterApp(params.App, params.GitUrl)
-	if err != nil {
-		server.logger.Err(err).Msgf("error registering app. - app=%s, gitUrl=%s", params.App, params.GitUrl)
-		return c.JSON(http.StatusInternalServerError, errStatus{
-			goapp, err,
-		})
+	if goapp == nil {
+		server.logger.Info().Msgf("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
+		goapp, err = server.runner.RegisterApp(params.App, params.GitUrl)
+		if err != nil {
+			server.logger.Err(err).Msgf("error registering app. - app=%s, gitUrl=%s", params.App, params.GitUrl)
+			return c.JSON(http.StatusInternalServerError, errStatus{
+				goapp, err,
+			})
+		}
+	} else {
+		server.logger.Info().Msgf("app already exist... - app=%s, gitUrl=%s", goapp.Name, goapp.GitURL)
 	}
 
 	return server.deployApp(c, goapp)
