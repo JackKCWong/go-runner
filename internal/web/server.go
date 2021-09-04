@@ -12,6 +12,7 @@ import (
 	"github.com/ziflex/lecho/v2"
 	"net"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -106,19 +107,27 @@ func (server *GoRunnerWebServer) health(c echo.Context) error {
 	return c.JSONPretty(http.StatusOK, server, "  ")
 }
 
+const mb = 1024 * 1024
+
 func (server *GoRunnerWebServer) MarshalJSON() ([]byte, error) {
 	apps := server.runner.ListApps()
 	addr := server.echo.ListenerAddr()
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
 	return json.Marshal(struct {
-		Status string        `json:"status"`
-		Wd     string        `json:"workding_dir"`
-		Addr   net.Addr      `json:"addr"`
-		Apps   []*core.GoApp `json:"apps,omitempty"`
-		NoApps int           `json:"no_of_apps"`
+		Status   string        `json:"status"`
+		Wd       string        `json:"workding_dir"`
+		Addr     net.Addr      `json:"addr"`
+		MemAlloc uint64        `json:"memAllocated"`
+		MemSys   uint64        `json:"memSys"`
+		Apps     []*core.GoApp `json:"apps,omitempty"`
+		NoApps   int           `json:"no_of_apps"`
 	}{
 		server.status,
 		server.wd,
 		addr,
+		mem.Alloc / mb,
+		mem.Sys / mb,
 		apps,
 		len(apps),
 	})
