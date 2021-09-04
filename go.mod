@@ -10,6 +10,7 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/rs/zerolog v1.23.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1

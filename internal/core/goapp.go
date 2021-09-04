@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JackKCWong/go-runner/internal/cg"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -26,25 +25,15 @@ type GoApp struct {
 	sync.Mutex
 	Name        string
 	GitURL      string
-	gitCommit   string
 	Status      string
 	AppDir      string
+	gitCommit   string
 	lastErr     error
 	buildStatus cmd.Status
 	proc        *cmd.Cmd
 	proxy       *httputil.ReverseProxy
 	stdout      *topic
 	stderr      *topic
-}
-
-var cgManager cg.CgManager
-
-func init() {
-	var err error
-	if cgManager, err = cg.NewCgManager("gorunner"); err != nil {
-		panic(err)
-	}
-
 }
 
 func (a *GoApp) Purge() error {
@@ -103,6 +92,13 @@ func (a *GoApp) Start() error {
 	a.Lock()
 	defer a.Unlock()
 
+	if a.Status == "STARTED" {
+		err := errors.New("app already started")
+		a.Status = "ERR:START"
+		a.lastErr = err
+		return err
+	}
+
 	// buildCmd := exec.Command("go", "build", "-o", a.Name)
 	buildCmd := cmd.NewCmd("go", "build", "-o", a.Name)
 	buildCmd.Dir = a.AppDir
@@ -156,7 +152,7 @@ func (a *GoApp) Start() error {
 
 	a.Status = "STARTED"
 
-	return cgManager.Add(a.proc.Status().PID)
+	return nil
 }
 
 func (a *GoApp) attach(repo *git.Repository) error {
@@ -202,14 +198,12 @@ func (a *GoApp) Stop() (retErr error) {
 	defer a.Unlock()
 
 	if a.Status == "STARTED" {
-		if err := a.proc.Stop(); err != nil {
-			retErr = err
-		}
-
+		retErr = a.proc.Stop()
+		a.proc = nil
 		a.stdout.Close()
 		a.stderr.Close()
-
 		a.Status = "STOPPED"
+
 		return
 	}
 

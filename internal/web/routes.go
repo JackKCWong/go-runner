@@ -82,7 +82,7 @@ func (server *GoRunnerWebServer) registerApp(c echo.Context) error {
 	goapp, _ := server.runner.GetApp(params.App)
 	if goapp == nil {
 		server.logger.Info().Msgf("registering app... - app=%s, gitUrl=%s", params.App, params.GitUrl)
-		goapp, err = server.runner.RegisterApp(params.App, params.GitUrl)
+		goapp, err = server.runner.NewApp(params.App, params.GitUrl)
 		if err != nil {
 			server.logger.Err(err).Msgf("error registering app. - app=%s, gitUrl=%s", params.App, params.GitUrl)
 			return c.JSON(http.StatusInternalServerError, errStatus{

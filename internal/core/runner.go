@@ -24,7 +24,7 @@ type GoRunner struct {
 
 const APPS_DIRNAME = "goapps"
 
-func (r *GoRunner) RegisterApp(appName, gitUrl string) (*GoApp, error) {
+func (r *GoRunner) NewApp(appName, gitUrl string) (*GoApp, error) {
 	appDir := path.Join(r.wd, APPS_DIRNAME, appName)
 
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
