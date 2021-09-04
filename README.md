@@ -41,5 +41,6 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
 * [ ] try using Namespace to isolate apps (ref: [Linux Namespace](https://medium.com/@teddyking/linux-namespaces-850489d3ccf))
     * [ ] PID namespace
     * [ ] filesystem
+* [ ] try using cgroup to manage apps resources (ref: [cgroup](https://github.com/containerd/cgroups))
     * [ ] cpu
-  
+    * [x] memory

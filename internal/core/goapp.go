@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/JackKCWong/go-runner/internal/cg"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -34,6 +35,16 @@ type GoApp struct {
 	proxy       *httputil.ReverseProxy
 	stdout      *topic
 	stderr      *topic
+}
+
+var cgManager cg.CgManager
+
+func init() {
+	var err error
+	if cgManager, err = cg.NewCgManager("gorunner"); err != nil {
+		panic(err)
+	}
+
 }
 
 func (a *GoApp) Purge() error {
@@ -145,7 +156,7 @@ func (a *GoApp) Start() error {
 
 	a.Status = "STARTED"
 
-	return nil
+	return cgManager.Add(a.proc.Status().PID)
 }
 
 func (a *GoApp) attach(repo *git.Repository) error {
