@@ -43,4 +43,4 @@ A naive imitation of [app-runner](https://github.com/danielflower/app-runner) fo
     * [ ] filesystem
 * [ ] try using cgroup to manage apps resources (ref: [cgroup](https://github.com/containerd/cgroups))
     * [ ] cpu
-    * [x] memory
+    * [ ] memory
