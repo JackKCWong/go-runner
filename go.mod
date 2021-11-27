@@ -3,14 +3,12 @@ module github.com/JackKCWong/go-runner
 go 1.14
 
 require (
-	github.com/containerd/cgroups v1.0.1
 	github.com/go-cmd/cmd v1.3.0
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/rs/zerolog v1.23.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
