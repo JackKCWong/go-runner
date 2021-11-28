@@ -30,11 +30,17 @@ func newSshPubKeyAuth() (*ssh.PublicKeys, error) {
 }
 
 func GetGitAuth() (transport.AuthMethod, error) {
-	agentAuth, err := ssh.NewSSHAgentAuth("")
+	var auth transport.AuthMethod
+	var err error
+	auth, err = newSshPubKeyAuth()
 	if err != nil {
 		// fallback to key auth
-		return newSshPubKeyAuth()
+		auth, err = ssh.NewSSHAgentAuth("")
 	}
 
-	return agentAuth, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return auth, nil
 }
