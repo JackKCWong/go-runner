@@ -24,7 +24,7 @@ func getExampleRepo(name string) string {
 		panic(err)
 	}
 
-	dir, err := filepath.Abs(path.Join(cwd, "../../examples/", name))
+	dir, err := filepath.Abs(path.Join(cwd, "../../../.git/modules/examples/", name))
 	if err != nil {
 		fmt.Printf("failed to get git repo dir: %q\n", err)
 		panic(err)
@@ -56,7 +56,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/apps"), url.Values{
 		"app":    {"hello-world"},
-		"gitUrl": {getExampleRepo("go-runner-hello-world")},
+		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
 	})
 
 	if err != nil {

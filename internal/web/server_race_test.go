@@ -45,7 +45,7 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		{
 			url.Values{
 				"app":    {"hello-world"},
-				"gitUrl": {getExampleRepo("go-runner-hello-world")},
+				"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
 			},
 			"/greeting",
 			"hello world",
@@ -53,7 +53,7 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		{
 			url.Values{
 				"app":    {"nihao-shijie"},
-				"gitUrl": {getExampleRepo("go-runner-nihao-shijie")},
+				"gitUrl": {"git@github.com:JackKCWong/go-runner-nihao-shijie.git"},
 			},
 			"/nihao",
 			"nihao, 世界",
@@ -89,7 +89,7 @@ func rollIt(assert *testify.Assertions, app testApp, endpoint func(string) strin
 
 	appName := app.reg["app"][0]
 	assert.Eventuallyf(hasApp(appName, endpoint("/api/health")), 5*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
-	assert.Eventuallyf(statusIsStarted(endpoint("/api/"+appName)), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(statusIsStarted(endpoint("/api/"+appName)), 5*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 
 	// test restart
 	restartReq, _ := http.NewRequest("PUT", endpoint("/api/"+appName), strings.NewReader("app="+appName+"&action=restart"))
@@ -97,8 +97,8 @@ func rollIt(assert *testify.Assertions, app testApp, endpoint func(string) strin
 	resp, err = http.DefaultClient.Do(restartReq)
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	assert.Eventuallyf(hasApp(appName, endpoint("/api/health")), 2*time.Second, 100*time.Millisecond, "timeout waiting for app to deploy")
-	assert.Eventuallyf(statusIsStarted(endpoint("/api/"+appName)), 2*time.Second, 100*time.Millisecond, "timeout waiting for app to start")
+	assert.Eventuallyf(hasApp(appName, endpoint("/api/health")), 5*time.Second, 100*time.Millisecond, "timeout waiting for app to deploy")
+	assert.Eventuallyf(statusIsStarted(endpoint("/api/"+appName)), 5*time.Second, 100*time.Millisecond, "timeout waiting for app to start")
 
 	// test app
 	resp, err = http.DefaultClient.Get(endpoint("/" + appName + app.url))
@@ -114,5 +114,5 @@ func rollIt(assert *testify.Assertions, app testApp, endpoint func(string) strin
 	resp, err = http.DefaultClient.Do(deleteReq)
 	assert.Nil(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	assert.Eventuallyf(statusIsNotFound(endpoint("/api/"+appName)), 1*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
+	assert.Eventuallyf(statusIsNotFound(endpoint("/api/"+appName)), 2*time.Second, 100*time.Millisecond, "timeout waiting for server to start")
 }

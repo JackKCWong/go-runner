@@ -50,14 +50,14 @@ func NewGoRunnerServer(wd string) *GoRunnerWebServer {
 }
 
 func (server *GoRunnerWebServer) Bootsrap(addr string) error {
-	server.logger.Info().Msg("starting go-server server...")
+	server.logger.Info().Msgf("starting go-server server. wd=%s, addr=%s", server.wd, addr)
 	server.Lock()
 	defer server.Unlock()
 
 	server.logger.Info().Msg("rehydrating apps...")
 	err := server.runner.Rehydrate()
 	if err != nil {
-		server.logger.Error().Msgf("errror during rehydration - %q", err)
+		server.logger.Error().Msgf("error during rehydration - %q", err)
 		return err
 	}
 

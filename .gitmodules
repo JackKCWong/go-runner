@@ -1,6 +1,0 @@
-[submodule "examples/go-runner-hello-world"]
-	path = examples/go-runner-hello-world
-	url = git@github.com:JackKCWong/go-runner-hello-world.git
-[submodule "examples/go-runner-nihao-shijie"]
-	path = examples/go-runner-nihao-shijie
-	url = git@github.com:JackKCWong/go-runner-nihao-shijie.git
