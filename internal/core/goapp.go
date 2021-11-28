@@ -71,9 +71,25 @@ func (a *GoApp) Rebuild() error {
 	})
 
 	if err != nil {
-		a.Status = "ERR:GITCLONE"
-		a.lastErr = err
-		return err
+		if strings.Contains(err.Error(), "couldn't find remote ref") {
+			repo, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
+				URL:           a.GitURL,
+				Depth:         1,
+				SingleBranch:  true,
+				ReferenceName: "refs/heads/main",
+				Auth:          sshAuth,
+			})
+
+			if err != nil {
+				a.Status = "ERR:GITCLONE"
+				a.lastErr = err
+				return err
+			}
+		} else {
+			a.Status = "ERR:GITCLONE"
+			a.lastErr = err
+			return err
+		}
 	}
 
 	err = a.attach(repo)
@@ -112,14 +128,13 @@ func (a *GoApp) Start() error {
 	}
 
 	exePath := path.Join(a.AppDir, a.Name)
-	//exePath := a.Name
 	sockPath := path.Join(a.AppDir, "sock")
 
 	runCmd := cmd.NewCmdOptions(cmd.Options{
 		Buffered:  false,
 		Streaming: true,
 	}, exePath, "-unixsock", sockPath)
-	runCmd.Dir, _ = os.Getwd()
+	runCmd.Dir = a.AppDir
 
 	a.stdout = newTopic()
 	go func() {

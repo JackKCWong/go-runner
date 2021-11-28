@@ -14,5 +14,8 @@ require (
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/ziflex/lecho/v2 v2.3.1
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
+	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
+	golang.org/x/tools v0.1.7 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )

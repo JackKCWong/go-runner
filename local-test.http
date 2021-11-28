@@ -2,7 +2,7 @@
 POST http://localhost:8080/api/apps
 Content-Type: application/x-www-form-urlencoded
 
-app=nihao-shijie&gitUrl=git@github.com:JackKCWong/go-runner-nihao-shijie.git
+app=go-scratchpad&gitUrl=git@github.com:JackKCWong/go-scratchpad.git
 
 
 ### register
