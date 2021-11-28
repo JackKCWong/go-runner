@@ -9,7 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
-func newSshPubKeyAuth() (transport.AuthMethod, error) {
+func newSshPubKeyAuth() (*ssh.PublicKeys, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err

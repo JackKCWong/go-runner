@@ -20,7 +20,7 @@ type testApp struct {
 	expect string
 }
 
-func TestGoRunnerConcurrencySafety(t *testing.T) {
+func TestGoRunnerRaceCondition(t *testing.T) {
 	assert := testify.New(t)
 
 	tempDir, err := os.MkdirTemp(os.TempDir(), "go-runner-test")
@@ -45,7 +45,7 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		{
 			url.Values{
 				"app":    {"hello-world"},
-				"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
+				"gitUrl": {getExampleRepo("go-runner-hello-world")},
 			},
 			"/greeting",
 			"hello world",
@@ -53,7 +53,7 @@ func TestGoRunnerConcurrencySafety(t *testing.T) {
 		{
 			url.Values{
 				"app":    {"nihao-shijie"},
-				"gitUrl": {"git@github.com:JackKCWong/go-runner-nihao-shijie.git"},
+				"gitUrl": {getExampleRepo("go-runner-nihao-shijie")},
 			},
 			"/nihao",
 			"nihao, 世界",

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/JackKCWong/go-runner/internal/util"
+	"github.com/go-git/go-git/v5"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -18,13 +20,47 @@ import (
 	testify "github.com/stretchr/testify/assert"
 )
 
-func getExampleRepo(name string) string {
-	cwd, err := os.Getwd()
+var tempDir string
+
+func init() {
+	var err error
+	tempDir, err = os.MkdirTemp(os.TempDir(), "go-runner-test")
 	if err != nil {
 		panic(err)
 	}
 
-	dir, err := filepath.Abs(path.Join(cwd, "../../../.git/modules/examples/", name))
+	fmt.Printf("starting at %s\n", tempDir)
+
+	gitAuth, err := util.GetGitAuth()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = git.PlainClone(path.Join(tempDir, "go-runner-hello-world"), false,
+		&git.CloneOptions{
+			URL:   "git@github.com:JackKCWong/go-runner-hello-world.git",
+			Depth: 1,
+			Auth:  gitAuth,
+		})
+
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = git.PlainClone(path.Join(tempDir, "go-runner-nihao-shijie"), false,
+		&git.CloneOptions{
+			URL:   "git@github.com:JackKCWong/go-runner-nihao-shijie.git",
+			Depth: 1,
+			Auth:  gitAuth,
+		})
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func getExampleRepo(name string) string {
+	dir, err := filepath.Abs(path.Join(tempDir, name))
 	if err != nil {
 		fmt.Printf("failed to get git repo dir: %q\n", err)
 		panic(err)
@@ -36,17 +72,10 @@ func getExampleRepo(name string) string {
 func TestGoRunnerDeployApp(t *testing.T) {
 	assert := testify.New(t)
 
-	tempDir, err := os.MkdirTemp(os.TempDir(), "go-runner-test")
-	if err != nil {
-		assert.FailNowf("failed to create temp dir", "%q", err)
-	}
-
-	fmt.Printf("starting at %s", tempDir)
-
 	runner := NewGoRunnerServer(tempDir)
 	defer runner.Stop(context.Background())
 
-	err = runner.Bootsrap(":0")
+	err := runner.Bootsrap(":0")
 	assert.Nil(err)
 
 	go runner.Serve()
@@ -56,7 +85,7 @@ func TestGoRunnerDeployApp(t *testing.T) {
 
 	resp, err := http.DefaultClient.PostForm(runner.endpoint("/api/apps"), url.Values{
 		"app":    {"hello-world"},
-		"gitUrl": {"git@github.com:JackKCWong/go-runner-hello-world.git"},
+		"gitUrl": {getExampleRepo("go-runner-hello-world")},
 	})
 
 	if err != nil {
