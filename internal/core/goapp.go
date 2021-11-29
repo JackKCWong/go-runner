@@ -64,32 +64,16 @@ func (a *GoApp) Rebuild() error {
 	}
 
 	repo, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
-		URL:          a.GitURL,
-		Depth:        1,
-		SingleBranch: true,
-		Auth:         sshAuth,
+		URL:   a.GitURL,
+		Depth: 1,
+		//SingleBranch: true,
+		Auth: sshAuth,
 	})
 
 	if err != nil {
-		if strings.Contains(err.Error(), "couldn't find remote ref") {
-			repo, err = git.PlainClone(a.AppDir, false, &git.CloneOptions{
-				URL:           a.GitURL,
-				Depth:         1,
-				SingleBranch:  true,
-				ReferenceName: "refs/heads/main",
-				Auth:          sshAuth,
-			})
-
-			if err != nil {
-				a.Status = "ERR:GITCLONE"
-				a.lastErr = err
-				return err
-			}
-		} else {
-			a.Status = "ERR:GITCLONE"
-			a.lastErr = err
-			return err
-		}
+		a.Status = "ERR:GITCLONE"
+		a.lastErr = err
+		return err
 	}
 
 	err = a.attach(repo)
