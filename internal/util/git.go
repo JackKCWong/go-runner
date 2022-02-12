@@ -26,7 +26,12 @@ func newSshPubKeyAuth() (*ssh.PublicKeys, error) {
 		return nil, fmt.Errorf("cannot find id_rsa or id_ed25519 in ~/.ssh :%w", err)
 	}
 
-	return ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+	key, err := ssh.NewPublicKeysFromFile("git", sshKeyFile, "")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open ssh key. invalid PEM format or passphrase: %w", err)
+	}
+
+	return key, nil
 }
 
 func GetGitAuth() (transport.AuthMethod, error) {
