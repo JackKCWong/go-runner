@@ -16,7 +16,7 @@ import (
 
 var registerCmd = &cobra.Command{
 	Use:     "register",
-	Aliases: []string{"reg", "pub"},
+	Aliases: []string{"reg", "pub", "push"},
 	Short:   "Push the the current git repo to remote origin and register it to go-runner",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		verbose, err := cmd.Flags().GetBool("verbose")

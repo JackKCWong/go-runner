@@ -22,7 +22,7 @@ func init() {
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(registerCmd)
-	rootCmd.AddCommand(pushCmd)
+	//rootCmd.AddCommand(pushCmd)
 	rootCmd.AddCommand(deleteCmd)
 }
 
