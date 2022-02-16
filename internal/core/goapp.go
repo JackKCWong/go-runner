@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JackKCWong/go-runner/internal/util"
 	"github.com/go-cmd/cmd"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 )
 
 type GoApp struct {
@@ -34,6 +35,7 @@ type GoApp struct {
 	proxy       *httputil.ReverseProxy
 	stdout      *topic
 	stderr      *topic
+	log         *zerolog.Logger
 }
 
 func (a *GoApp) Purge() error {
@@ -56,18 +58,32 @@ func (a *GoApp) Rebuild() error {
 		return err
 	}
 
-	sshAuth, err := util.GetGitAuth()
+	gitConfig, err := config.LoadConfig(config.GlobalScope)
 	if err != nil {
-		a.Status = "ERR:SSHKEY"
-		a.lastErr = err
-		return err
+		a.log.Warn().Err(err).Msg("failed to load git global config")
+	} else {
+		for _, u := range gitConfig.URLs {
+			if strings.HasPrefix(a.GitURL, u.InsteadOf) {
+				// should be longest match really.
+				// but let's take a shortcut for now.
+				a.GitURL = u.ApplyInsteadOf(a.GitURL)
+				break
+			}
+		}
 	}
+
+	//sshAuth, err := util.GetGitAuth()
+	//if err != nil {
+	//	a.Status = "ERR:SSHKEY"
+	//	a.lastErr = err
+	//	return err
+	//}
 
 	repo, err := git.PlainClone(a.AppDir, false, &git.CloneOptions{
 		URL:   a.GitURL,
 		Depth: 1,
 		//SingleBranch: true,
-		Auth: sshAuth,
+		//Auth: sshAuth,
 	})
 
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"path"
@@ -12,7 +14,8 @@ import (
 
 func NewGoRunner(wd string) *GoRunner {
 	return &GoRunner{
-		wd: wd,
+		wd:  wd,
+		log: &log.Logger,
 	}
 }
 
@@ -20,6 +23,7 @@ type GoRunner struct {
 	_    struct{}
 	apps sync.Map
 	wd   string
+	log  *zerolog.Logger
 }
 
 const APPS_DIRNAME = "goapps"
@@ -37,6 +41,7 @@ func (r *GoRunner) NewApp(appName, gitUrl string) (*GoApp, error) {
 		Name:   appName,
 		GitURL: gitUrl,
 		AppDir: appDir,
+		log:    r.log,
 	}
 
 	r.apps.Store(appName, app)

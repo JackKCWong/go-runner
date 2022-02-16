@@ -14,6 +14,15 @@ Content-Type: application/json
   "gitUrl": "git@github.com:JackKCWong/go-runner-hello-world.git"
 }
 
+###
+POST http://localhost:8080/api/apps
+Content-Type: application/json
+
+{
+  "app": "hello-world",
+  "gitUrl": "jack@github.com/go-runner-hello-world.git"
+}
+
 ### get health
 GET http://localhost:8080/api/health
 
